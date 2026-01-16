@@ -122,6 +122,36 @@ export default function ReportProductionForm({ contractors, finishedGoods, onSuc
               </TableContainer>
             </Alert>
           )}
+
+          {result.anomalies && result.anomalies.length > 0 && (
+            <Alert severity="error" sx={{ mb: 1 }}>
+              <Typography variant="subtitle2" gutterBottom>
+                Anomalies Detected (Variance &gt; 2%):
+              </Typography>
+              <TableContainer>
+                <Table size="small">
+                  <TableHead>
+                    <TableRow>
+                      <TableCell>Material</TableCell>
+                      <TableCell>Type</TableCell>
+                      <TableCell align="right">Variance %</TableCell>
+                    </TableRow>
+                  </TableHead>
+                  <TableBody>
+                    {result.anomalies.map((a, i) => (
+                      <TableRow key={i}>
+                        <TableCell>{a.material_code} - {a.material_name}</TableCell>
+                        <TableCell>{a.anomaly_type}</TableCell>
+                        <TableCell align="right" sx={{ color: 'error.main', fontWeight: 'bold' }}>
+                          {a.variance_percent.toFixed(2)}%
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                  </TableBody>
+                </Table>
+              </TableContainer>
+            </Alert>
+          )}
         </Box>
       )}
 

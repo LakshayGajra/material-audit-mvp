@@ -21,6 +21,7 @@ import FinishedGoodsPage from './components/FinishedGoodsPage';
 import ReportProductionForm from './components/ReportProductionForm';
 import ProductionHistory from './components/ProductionHistory';
 import BOMManagement from './components/BOMManagement';
+import AnomalyList from './components/AnomalyList';
 
 const theme = createTheme({
   palette: {
@@ -94,6 +95,7 @@ function App() {
           <Tab label="Production" />
           <Tab label="Finished Goods" />
           <Tab label="BOM" />
+          <Tab label="Anomalies" />
         </Tabs>
 
         {tab === 0 && (
@@ -142,6 +144,10 @@ function App() {
             finishedGoods={finishedGoods}
             materials={materials}
           />
+        )}
+
+        {tab === 4 && (
+          <AnomalyList />
         )}
       </Container>
     </ThemeProvider>

@@ -22,4 +22,7 @@ export const getBOM = (finishedGoodId) => api.get(`/bom/${finishedGoodId}`);
 export const addBOMItem = (data) => api.post('/bom', data);
 export const deleteBOMItem = (bomId) => api.delete(`/bom/${bomId}`);
 
+export const getAnomalies = (resolved) => api.get('/anomalies', { params: { resolved } });
+export const resolveAnomaly = (anomalyId) => api.post(`/anomalies/${anomalyId}/resolve`);
+
 export default api;

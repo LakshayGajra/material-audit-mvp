@@ -5,6 +5,7 @@ from app.models.finished_good import FinishedGood
 from app.models.production_record import ProductionRecord
 from app.models.bom import BOM
 from app.models.consumption import Consumption
+from app.models.anomaly import Anomaly
 
 __all__ = [
     "Material",
@@ -14,4 +15,5 @@ __all__ = [
     "ProductionRecord",
     "BOM",
     "Consumption",
+    "Anomaly",
 ]

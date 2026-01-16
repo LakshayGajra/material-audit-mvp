@@ -3,16 +3,74 @@ from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
 from app.database import get_db
-from app.models import Contractor, FinishedGood, ProductionRecord, BOM, ContractorInventory, Consumption
+from app.models import Contractor, FinishedGood, ProductionRecord, BOM, ContractorInventory, Consumption, Anomaly
 from app.schemas import (
     ProductionReport,
     ProductionReportResult,
     ProductionHistoryItem,
     MaterialShortage,
     ConsumptionDetail,
+    AnomalyBrief,
 )
 
 router = APIRouter(prefix="/api/production", tags=["production"])
+
+VARIANCE_THRESHOLD = 0.02  # 2%
+
+
+def check_inventory_anomaly(
+    db: Session,
+    contractor_id: int,
+    material_id: int,
+    material_code: str,
+    material_name: str,
+    required_qty: float,
+    available_qty: float,
+    production_record_id: int,
+) -> AnomalyBrief | None:
+    """
+    Check if there's an inventory anomaly after production.
+    Returns an AnomalyBrief if variance > 2%, otherwise None.
+    """
+    # Expected: inventory should cover the required quantity
+    # Actual: what they actually have
+    # Variance: if they don't have enough, that's a negative variance
+
+    if required_qty == 0:
+        return None
+
+    # Calculate variance as percentage of required
+    shortage = required_qty - available_qty
+
+    if shortage <= 0:
+        # They have enough, no anomaly
+        return None
+
+    variance_percent = (shortage / required_qty) * 100
+
+    if variance_percent > (VARIANCE_THRESHOLD * 100):
+        # Create anomaly record
+        anomaly = Anomaly(
+            contractor_id=contractor_id,
+            material_id=material_id,
+            production_record_id=production_record_id,
+            expected_quantity=required_qty,
+            actual_quantity=available_qty,
+            variance=shortage,
+            variance_percent=variance_percent,
+            anomaly_type="shortage",
+            notes=f"Contractor had {available_qty:.2f} but needed {required_qty:.2f} for production",
+        )
+        db.add(anomaly)
+
+        return AnomalyBrief(
+            material_code=material_code,
+            material_name=material_name,
+            variance_percent=round(variance_percent, 2),
+            anomaly_type="shortage",
+        )
+
+    return None
 
 
 @router.post("/report", response_model=ProductionReportResult)
@@ -58,6 +116,7 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
         consumption_details.append({
             "bom_item": bom_item,
             "required_qty": required_qty,
+            "available_qty": available_qty,
             "inventory": inventory,
         })
 
@@ -71,12 +130,29 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
     db.add(record)
     db.flush()  # Get the record ID
 
-    # Create consumption records and update inventory
+    # Create consumption records, update inventory, and check for anomalies
     consumptions = []
+    anomalies = []
+
     for detail in consumption_details:
         bom_item = detail["bom_item"]
         required_qty = detail["required_qty"]
+        available_qty = detail["available_qty"]
         inventory = detail["inventory"]
+
+        # Check for anomaly BEFORE updating inventory
+        anomaly = check_inventory_anomaly(
+            db=db,
+            contractor_id=report.contractor_id,
+            material_id=bom_item.material_id,
+            material_code=bom_item.material.code,
+            material_name=bom_item.material.name,
+            required_qty=required_qty,
+            available_qty=available_qty,
+            production_record_id=record.id,
+        )
+        if anomaly:
+            anomalies.append(anomaly)
 
         # Create consumption record
         consumption = Consumption(
@@ -116,6 +192,7 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
         production_date=record.production_date,
         consumptions=consumptions,
         warnings=warnings,
+        anomalies=anomalies,
     )
 
 

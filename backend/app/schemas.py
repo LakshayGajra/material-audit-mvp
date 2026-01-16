@@ -135,6 +135,34 @@ class ConsumptionDetail(BaseModel):
     quantity_consumed: float
 
 
+class AnomalyResponse(BaseModel):
+    id: int
+    contractor_id: int
+    contractor_name: str
+    material_id: int
+    material_code: str
+    material_name: str
+    expected_quantity: float
+    actual_quantity: float
+    variance: float
+    variance_percent: float
+    anomaly_type: str
+    notes: str | None
+    resolved: bool
+    resolved_at: datetime | None
+    created_at: datetime
+
+    class Config:
+        from_attributes = True
+
+
+class AnomalyBrief(BaseModel):
+    material_code: str
+    material_name: str
+    variance_percent: float
+    anomaly_type: str
+
+
 class ProductionReportResult(BaseModel):
     id: int
     contractor_id: int
@@ -143,3 +171,4 @@ class ProductionReportResult(BaseModel):
     production_date: date
     consumptions: list[ConsumptionDetail]
     warnings: list[MaterialShortage]
+    anomalies: list[AnomalyBrief]
