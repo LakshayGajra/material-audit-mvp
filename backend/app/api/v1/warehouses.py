@@ -11,6 +11,8 @@ from app.schemas.warehouse import (
     WarehouseUpdate,
     WarehouseResponse,
     WarehouseInventoryResponse,
+    WarehouseInventoryCreate,
+    WarehouseInventoryUpdate,
 )
 
 logger = logging.getLogger(__name__)
@@ -193,3 +195,109 @@ def get_low_stock_items(warehouse_id: int, db: Session = Depends(get_db)):
         ))
 
     return result
+
+
+@router.post("/{warehouse_id}/inventory", response_model=WarehouseInventoryResponse, status_code=201)
+def add_warehouse_inventory(
+    warehouse_id: int,
+    inventory: WarehouseInventoryCreate,
+    db: Session = Depends(get_db),
+):
+    """Add a material to warehouse inventory (for initial setup/testing)."""
+    warehouse = db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
+    if not warehouse:
+        raise HTTPException(status_code=404, detail="Warehouse not found")
+
+    material = db.query(Material).filter(Material.id == inventory.material_id).first()
+    if not material:
+        raise HTTPException(status_code=404, detail="Material not found")
+
+    # Check if already exists
+    existing = db.query(WarehouseInventory).filter(
+        WarehouseInventory.warehouse_id == warehouse_id,
+        WarehouseInventory.material_id == inventory.material_id,
+    ).first()
+
+    if existing:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Inventory for material '{material.code}' already exists in this warehouse"
+        )
+
+    db_inventory = WarehouseInventory(
+        warehouse_id=warehouse_id,
+        material_id=inventory.material_id,
+        current_quantity=inventory.current_quantity,
+        unit_of_measure=inventory.unit_of_measure,
+        reorder_point=inventory.reorder_point,
+        reorder_quantity=inventory.reorder_quantity,
+    )
+    db.add(db_inventory)
+    db.commit()
+    db.refresh(db_inventory)
+
+    logger.info(f"Added {db_inventory.current_quantity} {db_inventory.unit_of_measure} of {material.code} to warehouse {warehouse.code}")
+
+    return WarehouseInventoryResponse(
+        id=db_inventory.id,
+        warehouse_id=db_inventory.warehouse_id,
+        warehouse_name=warehouse.name,
+        material_id=db_inventory.material_id,
+        material_name=material.name,
+        material_code=material.code,
+        current_quantity=db_inventory.current_quantity,
+        unit_of_measure=db_inventory.unit_of_measure,
+        reorder_point=db_inventory.reorder_point,
+        reorder_quantity=db_inventory.reorder_quantity,
+        is_below_reorder=db_inventory.is_below_reorder_point(),
+        last_updated=db_inventory.last_updated,
+    )
+
+
+@router.put("/{warehouse_id}/inventory/{inventory_id}", response_model=WarehouseInventoryResponse)
+def update_warehouse_inventory(
+    warehouse_id: int,
+    inventory_id: int,
+    update: WarehouseInventoryUpdate,
+    db: Session = Depends(get_db),
+):
+    """Update warehouse inventory (for adjustments/corrections)."""
+    warehouse = db.query(Warehouse).filter(Warehouse.id == warehouse_id).first()
+    if not warehouse:
+        raise HTTPException(status_code=404, detail="Warehouse not found")
+
+    inventory = db.query(WarehouseInventory).filter(
+        WarehouseInventory.id == inventory_id,
+        WarehouseInventory.warehouse_id == warehouse_id,
+    ).first()
+
+    if not inventory:
+        raise HTTPException(status_code=404, detail="Inventory record not found")
+
+    material = db.query(Material).filter(Material.id == inventory.material_id).first()
+
+    # Update fields
+    update_data = update.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
+        if value is not None:
+            setattr(inventory, field, value)
+
+    db.commit()
+    db.refresh(inventory)
+
+    logger.info(f"Updated inventory for {material.code} in warehouse {warehouse.code}")
+
+    return WarehouseInventoryResponse(
+        id=inventory.id,
+        warehouse_id=inventory.warehouse_id,
+        warehouse_name=warehouse.name,
+        material_id=inventory.material_id,
+        material_name=material.name,
+        material_code=material.code,
+        current_quantity=inventory.current_quantity,
+        unit_of_measure=inventory.unit_of_measure,
+        reorder_point=inventory.reorder_point,
+        reorder_quantity=inventory.reorder_quantity,
+        is_below_reorder=inventory.is_below_reorder_point(),
+        last_updated=inventory.last_updated,
+    )

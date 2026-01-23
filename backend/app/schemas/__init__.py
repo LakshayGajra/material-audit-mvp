@@ -73,6 +73,14 @@ from app.schemas.unit_conversion import (
     ConvertQuantityResponse,
 )
 
+# Export issuance schemas
+from app.schemas.issuance import (
+    IssuanceRequest,
+    IssuanceResponse,
+    IssuanceHistoryQuery,
+    IssuanceListResponse,
+)
+
 __all__ = [
     # Legacy schemas
     "MaterialCreate",
@@ -131,4 +139,9 @@ __all__ = [
     "UnitConversionResponse",
     "ConvertQuantityRequest",
     "ConvertQuantityResponse",
+    # Issuance schemas
+    "IssuanceRequest",
+    "IssuanceResponse",
+    "IssuanceHistoryQuery",
+    "IssuanceListResponse",
 ]
