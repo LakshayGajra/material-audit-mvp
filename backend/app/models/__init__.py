@@ -15,6 +15,7 @@ from app.models.purchase_order_line import PurchaseOrderLine
 from app.models.goods_receipt import GoodsReceipt
 from app.models.goods_receipt_line import GoodsReceiptLine
 from app.models.material_issuance import MaterialIssuance
+from app.models.material_rejection import MaterialRejection
 
 __all__ = [
     "Material",
@@ -34,4 +35,5 @@ __all__ = [
     "GoodsReceipt",
     "GoodsReceiptLine",
     "MaterialIssuance",
+    "MaterialRejection",
 ]

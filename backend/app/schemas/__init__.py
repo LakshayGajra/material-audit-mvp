@@ -81,6 +81,17 @@ from app.schemas.issuance import (
     IssuanceListResponse,
 )
 
+# Export rejection schemas
+from app.schemas.rejection import (
+    RejectionReportRequest,
+    RejectionApprovalRequest,
+    RejectionReceiveRequest,
+    RejectionDisputeRequest,
+    RejectionResponse,
+    RejectionListResponse,
+    REJECTION_STATUSES,
+)
+
 __all__ = [
     # Legacy schemas
     "MaterialCreate",
@@ -144,4 +155,12 @@ __all__ = [
     "IssuanceResponse",
     "IssuanceHistoryQuery",
     "IssuanceListResponse",
+    # Rejection schemas
+    "RejectionReportRequest",
+    "RejectionApprovalRequest",
+    "RejectionReceiveRequest",
+    "RejectionDisputeRequest",
+    "RejectionResponse",
+    "RejectionListResponse",
+    "REJECTION_STATUSES",
 ]
