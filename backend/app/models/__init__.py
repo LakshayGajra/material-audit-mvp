@@ -16,6 +16,10 @@ from app.models.goods_receipt import GoodsReceipt
 from app.models.goods_receipt_line import GoodsReceiptLine
 from app.models.material_issuance import MaterialIssuance
 from app.models.material_rejection import MaterialRejection
+from app.models.variance_threshold import VarianceThreshold
+from app.models.audit import Audit
+from app.models.audit_line_item import AuditLineItem
+from app.models.inventory_adjustment import InventoryAdjustment
 
 __all__ = [
     "Material",
@@ -36,4 +40,8 @@ __all__ = [
     "GoodsReceiptLine",
     "MaterialIssuance",
     "MaterialRejection",
+    "VarianceThreshold",
+    "Audit",
+    "AuditLineItem",
+    "InventoryAdjustment",
 ]

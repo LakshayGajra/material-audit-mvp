@@ -92,6 +92,27 @@ from app.schemas.rejection import (
     REJECTION_STATUSES,
 )
 
+# Export audit schemas
+from app.schemas.audit import (
+    AuditStartRequest,
+    AuditMaterialForAuditor,
+    AuditForAuditor,
+    PhysicalCountEntry,
+    AuditSubmitRequest,
+    AuditLineItemFull,
+    AuditFullResponse,
+    AuditListResponse,
+    AuditListQuery,
+    ThresholdCreate,
+    ThresholdUpdate,
+    ThresholdResponse,
+    ThresholdListResponse,
+    AdjustmentRequest,
+    AdjustmentApprovalRequest,
+    AdjustmentResponse,
+    AdjustmentListResponse,
+)
+
 __all__ = [
     # Legacy schemas
     "MaterialCreate",
@@ -163,4 +184,22 @@ __all__ = [
     "RejectionResponse",
     "RejectionListResponse",
     "REJECTION_STATUSES",
+    # Audit schemas
+    "AuditStartRequest",
+    "AuditMaterialForAuditor",
+    "AuditForAuditor",
+    "PhysicalCountEntry",
+    "AuditSubmitRequest",
+    "AuditLineItemFull",
+    "AuditFullResponse",
+    "AuditListResponse",
+    "AuditListQuery",
+    "ThresholdCreate",
+    "ThresholdUpdate",
+    "ThresholdResponse",
+    "ThresholdListResponse",
+    "AdjustmentRequest",
+    "AdjustmentApprovalRequest",
+    "AdjustmentResponse",
+    "AdjustmentListResponse",
 ]
