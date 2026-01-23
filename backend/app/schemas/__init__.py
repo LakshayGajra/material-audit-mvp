@@ -64,6 +64,15 @@ from app.schemas.supplier import (
     SupplierListResponse,
 )
 
+# Export unit conversion schemas
+from app.schemas.unit_conversion import (
+    UnitConversionCreate,
+    UnitConversionUpdate,
+    UnitConversionResponse,
+    ConvertQuantityRequest,
+    ConvertQuantityResponse,
+)
+
 __all__ = [
     # Legacy schemas
     "MaterialCreate",
@@ -116,4 +125,10 @@ __all__ = [
     "SupplierUpdate",
     "SupplierResponse",
     "SupplierListResponse",
+    # Unit conversion schemas
+    "UnitConversionCreate",
+    "UnitConversionUpdate",
+    "UnitConversionResponse",
+    "ConvertQuantityRequest",
+    "ConvertQuantityResponse",
 ]
