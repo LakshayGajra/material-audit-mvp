@@ -20,6 +20,8 @@ from app.models.variance_threshold import VarianceThreshold
 from app.models.audit import Audit
 from app.models.audit_line_item import AuditLineItem
 from app.models.inventory_adjustment import InventoryAdjustment
+from app.models.reconciliation import Reconciliation
+from app.models.reconciliation_line import ReconciliationLine
 
 __all__ = [
     "Material",
@@ -44,4 +46,6 @@ __all__ = [
     "Audit",
     "AuditLineItem",
     "InventoryAdjustment",
+    "Reconciliation",
+    "ReconciliationLine",
 ]

@@ -1,4 +1,7 @@
+import logging
 from datetime import date
+from typing import List, Tuple
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
@@ -12,6 +15,8 @@ from app.schemas import (
     ConsumptionDetail,
     AnomalyBrief,
 )
+
+logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/api/production", tags=["production"])
 
@@ -71,6 +76,59 @@ def check_inventory_anomaly(
         )
 
     return None
+
+
+def check_negative_inventory(
+    db: Session,
+    contractor_id: int,
+    material_id: int,
+    material_code: str,
+    material_name: str,
+    current_qty: float,
+    consumption_qty: float,
+    production_record_id: int,
+) -> Tuple[AnomalyBrief | None, str | None]:
+    """
+    Check if production would cause negative inventory.
+    Returns (AnomalyBrief, warning_message) if negative, (None, None) otherwise.
+
+    This is a CRITICAL anomaly - production causes inventory to go negative.
+    """
+    new_balance = current_qty - consumption_qty
+
+    if new_balance < 0:
+        # Create CRITICAL anomaly for negative inventory
+        anomaly = Anomaly(
+            contractor_id=contractor_id,
+            material_id=material_id,
+            production_record_id=production_record_id,
+            expected_quantity=consumption_qty,
+            actual_quantity=current_qty,
+            variance=new_balance,  # Negative value
+            variance_percent=100.0 if current_qty == 0 else abs(new_balance / current_qty) * 100,
+            anomaly_type="negative_inventory",
+            notes=f"CRITICAL: Production caused negative inventory. Had {current_qty:.2f}, consumed {consumption_qty:.2f}, balance now {new_balance:.2f}",
+        )
+        db.add(anomaly)
+
+        warning_msg = f"Production caused negative inventory for {material_name} (balance: {new_balance:.2f})"
+
+        logger.warning(
+            f"NEGATIVE INVENTORY: contractor={contractor_id}, material={material_code}, "
+            f"had={current_qty:.2f}, consumed={consumption_qty:.2f}, balance={new_balance:.2f}"
+        )
+
+        return (
+            AnomalyBrief(
+                material_code=material_code,
+                material_name=material_name,
+                variance_percent=round(abs(new_balance / consumption_qty) * 100 if consumption_qty > 0 else 100, 2),
+                anomaly_type="negative_inventory",
+            ),
+            warning_msg
+        )
+
+    return None, None
 
 
 @router.post("/report", response_model=ProductionReportResult)
@@ -133,6 +191,7 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
     # Create consumption records, update inventory, and check for anomalies
     consumptions = []
     anomalies = []
+    negative_inventory_warnings = []
 
     for detail in consumption_details:
         bom_item = detail["bom_item"]
@@ -140,8 +199,8 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
         available_qty = detail["available_qty"]
         inventory = detail["inventory"]
 
-        # Check for anomaly BEFORE updating inventory
-        anomaly = check_inventory_anomaly(
+        # Check for shortage anomaly BEFORE updating inventory
+        shortage_anomaly = check_inventory_anomaly(
             db=db,
             contractor_id=report.contractor_id,
             material_id=bom_item.material_id,
@@ -151,8 +210,24 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
             available_qty=available_qty,
             production_record_id=record.id,
         )
-        if anomaly:
-            anomalies.append(anomaly)
+        if shortage_anomaly:
+            anomalies.append(shortage_anomaly)
+
+        # Check if production would cause negative inventory
+        negative_anomaly, warning_msg = check_negative_inventory(
+            db=db,
+            contractor_id=report.contractor_id,
+            material_id=bom_item.material_id,
+            material_code=bom_item.material.code,
+            material_name=bom_item.material.name,
+            current_qty=available_qty,
+            consumption_qty=required_qty,
+            production_record_id=record.id,
+        )
+        if negative_anomaly:
+            anomalies.append(negative_anomaly)
+        if warning_msg:
+            negative_inventory_warnings.append(warning_msg)
 
         # Create consumption record
         consumption = Consumption(
@@ -163,7 +238,7 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
         )
         db.add(consumption)
 
-        # Update inventory (deduct materials)
+        # Update inventory (deduct materials) - don't block production
         if inventory:
             inventory.quantity -= required_qty
         else:
@@ -179,6 +254,16 @@ def report_production(report: ProductionReport, db: Session = Depends(get_db)):
             material_code=bom_item.material.code,
             material_name=bom_item.material.name,
             quantity_consumed=required_qty,
+        ))
+
+    # Add negative inventory warnings to the main warnings list
+    for neg_warning in negative_inventory_warnings:
+        warnings.append(MaterialShortage(
+            material_code="SYSTEM",
+            material_name=neg_warning,
+            required=0,
+            available=0,
+            shortage=0,
         ))
 
     db.commit()

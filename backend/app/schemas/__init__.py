@@ -113,6 +113,17 @@ from app.schemas.audit import (
     AdjustmentListResponse,
 )
 
+# Export reconciliation schemas
+from app.schemas.reconciliation import (
+    ReconciliationItemSubmit,
+    ReconciliationSubmitRequest,
+    ReconciliationLineResponse,
+    ReconciliationResponse,
+    ReconciliationListResponse,
+    ReconciliationReviewRequest,
+    ReconciliationListQuery,
+)
+
 __all__ = [
     # Legacy schemas
     "MaterialCreate",
@@ -202,4 +213,12 @@ __all__ = [
     "AdjustmentApprovalRequest",
     "AdjustmentResponse",
     "AdjustmentListResponse",
+    # Reconciliation schemas
+    "ReconciliationItemSubmit",
+    "ReconciliationSubmitRequest",
+    "ReconciliationLineResponse",
+    "ReconciliationResponse",
+    "ReconciliationListResponse",
+    "ReconciliationReviewRequest",
+    "ReconciliationListQuery",
 ]

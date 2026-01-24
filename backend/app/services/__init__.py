@@ -11,6 +11,13 @@ from app.services.inventory_calculator import (
     InventoryCalculationResult,
     InventoryCalculationError,
 )
+from app.services.threshold_service import (
+    get_threshold,
+    get_threshold_with_source,
+    create_threshold,
+    update_threshold,
+    SYSTEM_DEFAULT_THRESHOLD,
+)
 
 __all__ = [
     # Unit conversion
@@ -24,4 +31,10 @@ __all__ = [
     "is_anomaly",
     "InventoryCalculationResult",
     "InventoryCalculationError",
+    # Threshold service
+    "get_threshold",
+    "get_threshold_with_source",
+    "create_threshold",
+    "update_threshold",
+    "SYSTEM_DEFAULT_THRESHOLD",
 ]
