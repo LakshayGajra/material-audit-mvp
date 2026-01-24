@@ -22,6 +22,11 @@ import ReportProductionForm from './components/ReportProductionForm';
 import ProductionHistory from './components/ProductionHistory';
 import BOMManagement from './components/BOMManagement';
 import AnomalyList from './components/AnomalyList';
+import WarehousePage from './components/WarehousePage';
+import PurchaseOrdersPage from './components/PurchaseOrdersPage';
+import RejectionsPage from './components/RejectionsPage';
+import AuditsPage from './components/AuditsPage';
+import ThresholdsPage from './components/ThresholdsPage';
 
 const theme = createTheme({
   palette: {
@@ -71,12 +76,10 @@ function App() {
     }
   };
 
-  const handleIssueSuccess = () => {
+  const handleRefresh = () => {
     setRefreshKey((k) => k + 1);
-  };
-
-  const handleProductionSuccess = () => {
-    setRefreshKey((k) => k + 1);
+    loadContractors();
+    loadMaterials();
   };
 
   return (
@@ -89,22 +92,35 @@ function App() {
         </Toolbar>
       </AppBar>
 
-      <Container maxWidth="lg" sx={{ mt: 2, mb: 4 }}>
-        <Tabs value={tab} onChange={(e, v) => setTab(v)} sx={{ mb: 3 }}>
-          <Tab label="Materials" />
-          <Tab label="Production" />
-          <Tab label="Finished Goods" />
-          <Tab label="BOM" />
-          <Tab label="Anomalies" />
-        </Tabs>
+      <Container maxWidth="xl" sx={{ mt: 2, mb: 4 }}>
+        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+          <Tabs
+            value={tab}
+            onChange={(e, v) => setTab(v)}
+            variant="scrollable"
+            scrollButtons="auto"
+          >
+            <Tab label="Materials" />
+            <Tab label="Production" />
+            <Tab label="Finished Goods" />
+            <Tab label="BOM" />
+            <Tab label="Warehouse" />
+            <Tab label="Purchase Orders" />
+            <Tab label="Rejections" />
+            <Tab label="Audits" />
+            <Tab label="Anomalies" />
+            <Tab label="Thresholds" />
+          </Tabs>
+        </Box>
 
+        {/* Tab 0: Materials */}
         {tab === 0 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 4 }}>
               <IssueMaterialForm
                 contractors={contractors}
                 materials={materials}
-                onSuccess={handleIssueSuccess}
+                onSuccess={handleRefresh}
               />
               <ContractorList contractors={contractors} />
             </Grid>
@@ -117,13 +133,14 @@ function App() {
           </Grid>
         )}
 
+        {/* Tab 1: Production */}
         {tab === 1 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 4 }}>
               <ReportProductionForm
                 contractors={contractors}
                 finishedGoods={finishedGoods}
-                onSuccess={handleProductionSuccess}
+                onSuccess={handleRefresh}
               />
             </Grid>
             <Grid size={{ xs: 12, md: 8 }}>
@@ -135,10 +152,12 @@ function App() {
           </Grid>
         )}
 
+        {/* Tab 2: Finished Goods */}
         {tab === 2 && (
           <FinishedGoodsPage />
         )}
 
+        {/* Tab 3: BOM */}
         {tab === 3 && (
           <BOMManagement
             finishedGoods={finishedGoods}
@@ -146,8 +165,51 @@ function App() {
           />
         )}
 
+        {/* Tab 4: Warehouse */}
         {tab === 4 && (
+          <WarehousePage
+            materials={materials}
+            refreshKey={refreshKey}
+          />
+        )}
+
+        {/* Tab 5: Purchase Orders */}
+        {tab === 5 && (
+          <PurchaseOrdersPage
+            materials={materials}
+            refreshKey={refreshKey}
+          />
+        )}
+
+        {/* Tab 6: Rejections */}
+        {tab === 6 && (
+          <RejectionsPage
+            contractors={contractors}
+            materials={materials}
+            refreshKey={refreshKey}
+          />
+        )}
+
+        {/* Tab 7: Audits */}
+        {tab === 7 && (
+          <AuditsPage
+            contractors={contractors}
+            refreshKey={refreshKey}
+          />
+        )}
+
+        {/* Tab 8: Anomalies */}
+        {tab === 8 && (
           <AnomalyList />
+        )}
+
+        {/* Tab 9: Thresholds */}
+        {tab === 9 && (
+          <ThresholdsPage
+            contractors={contractors}
+            materials={materials}
+            refreshKey={refreshKey}
+          />
         )}
       </Container>
     </ThemeProvider>

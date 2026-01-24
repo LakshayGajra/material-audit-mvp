@@ -4,25 +4,117 @@ const api = axios.create({
   baseURL: '/api',
 });
 
+// Contractors
 export const getContractors = () => api.get('/contractors');
 export const createContractor = (data) => api.post('/contractors', data);
 export const getContractorInventory = (id) => api.get(`/contractors/${id}/inventory`);
 
+// Materials
 export const getMaterials = () => api.get('/materials');
 export const createMaterial = (data) => api.post('/materials', data);
 export const issueMaterial = (data) => api.post('/materials/issue', data);
 
+// Finished Goods
 export const getFinishedGoods = () => api.get('/finished-goods');
 export const createFinishedGood = (data) => api.post('/finished-goods', data);
 
+// Production
 export const reportProduction = (data) => api.post('/production/report', data);
 export const getProductionHistory = (contractorId) => api.get(`/production/history/${contractorId}`);
 
+// BOM
 export const getBOM = (finishedGoodId) => api.get(`/bom/${finishedGoodId}`);
 export const addBOMItem = (data) => api.post('/bom', data);
 export const deleteBOMItem = (bomId) => api.delete(`/bom/${bomId}`);
 
+// Anomalies
 export const getAnomalies = (resolved) => api.get('/anomalies', { params: { resolved } });
 export const resolveAnomaly = (anomalyId) => api.post(`/anomalies/${anomalyId}/resolve`);
+
+// ============================================================================
+// V1 API ENDPOINTS
+// ============================================================================
+
+// Warehouses
+export const getWarehouses = () => api.get('/v1/warehouses');
+export const createWarehouse = (data) => api.post('/v1/warehouses', data);
+export const getWarehouse = (id) => api.get(`/v1/warehouses/${id}`);
+export const updateWarehouse = (id, data) => api.put(`/v1/warehouses/${id}`, data);
+export const getWarehouseInventory = (warehouseId) => api.get(`/v1/warehouses/${warehouseId}/inventory`);
+export const addWarehouseInventory = (warehouseId, data) => api.post(`/v1/warehouses/${warehouseId}/inventory`, data);
+export const updateWarehouseInventory = (warehouseId, inventoryId, data) =>
+  api.put(`/v1/warehouses/${warehouseId}/inventory/${inventoryId}`, data);
+export const getLowStockItems = (warehouseId) => api.get(`/v1/warehouses/${warehouseId}/low-stock`);
+
+// Suppliers
+export const getSuppliers = () => api.get('/v1/suppliers');
+export const createSupplier = (data) => api.post('/v1/suppliers', data);
+export const getSupplier = (id) => api.get(`/v1/suppliers/${id}`);
+export const updateSupplier = (id, data) => api.put(`/v1/suppliers/${id}`, data);
+
+// Purchase Orders
+export const getPurchaseOrders = (params) => api.get('/v1/purchase-orders', { params });
+export const createPurchaseOrder = (data) => api.post('/v1/purchase-orders', data);
+export const getPurchaseOrder = (id) => api.get(`/v1/purchase-orders/${id}`);
+export const updatePurchaseOrder = (id, data) => api.put(`/v1/purchase-orders/${id}`, data);
+export const submitPurchaseOrder = (id) => api.post(`/v1/purchase-orders/${id}/submit`);
+export const approvePurchaseOrder = (id, data) => api.post(`/v1/purchase-orders/${id}/approve`, data);
+export const cancelPurchaseOrder = (id) => api.post(`/v1/purchase-orders/${id}/cancel`);
+
+// Goods Receipts
+export const getGoodsReceipts = (params) => api.get('/v1/goods-receipts', { params });
+export const createGoodsReceipt = (data) => api.post('/v1/goods-receipts', data);
+export const getGoodsReceipt = (id) => api.get(`/v1/goods-receipts/${id}`);
+export const getPOGoodsReceipts = (poId) => api.get(`/v1/purchase-orders/${poId}/goods-receipts`);
+
+// Material Issuances (V1)
+export const getIssuances = (params) => api.get('/v1/issuances', { params });
+export const createIssuance = (data) => api.post('/v1/issuances', data);
+export const getIssuance = (id) => api.get(`/v1/issuances/${id}`);
+export const getContractorIssuances = (contractorId, params) =>
+  api.get(`/v1/contractors/${contractorId}/issuances`, { params });
+export const getMaterialIssuances = (materialId, params) =>
+  api.get(`/v1/materials/${materialId}/issuances`, { params });
+
+// Rejections
+export const getRejections = (params) => api.get('/v1/rejections', { params });
+export const createRejection = (data) => api.post('/v1/rejections', data);
+export const getRejection = (id) => api.get(`/v1/rejections/${id}`);
+export const approveRejection = (id, data) => api.put(`/v1/rejections/${id}/approve`, data);
+export const receiveRejection = (id, data) => api.put(`/v1/rejections/${id}/receive`, data);
+export const disputeRejection = (id, data) => api.put(`/v1/rejections/${id}/dispute`, data);
+export const getContractorRejections = (contractorId, params) =>
+  api.get(`/v1/contractors/${contractorId}/rejections`, { params });
+
+// Audits
+export const startAudit = (data) => api.post('/v1/audits/start', data);
+export const getAuditForAuditor = (auditId) => api.get(`/v1/audits/${auditId}/auditor-view`);
+export const enterAuditCounts = (auditId, data) => api.put(`/v1/audits/${auditId}/enter-counts`, data);
+export const submitAudit = (auditId) => api.post(`/v1/audits/${auditId}/submit`);
+export const getAuditAnalysis = (auditId) => api.get(`/v1/audits/${auditId}/analyze`);
+export const acceptAuditCounts = (auditId, data) => api.post(`/v1/audits/${auditId}/accept-counts`, data);
+export const keepSystemValues = (auditId, data) => api.post(`/v1/audits/${auditId}/keep-system-values`, data);
+export const closeAudit = (auditId, data) => api.post(`/v1/audits/${auditId}/close`, data);
+export const getAudits = (params) => api.get('/v1/audits', { params });
+export const getAudit = (id) => api.get(`/v1/audits/${id}`);
+
+// Thresholds
+export const getThresholds = (params) => api.get('/v1/thresholds', { params });
+export const createThreshold = (data, createdBy) =>
+  api.post('/v1/thresholds', data, { params: { created_by: createdBy } });
+export const updateThreshold = (id, data, updatedBy) =>
+  api.put(`/v1/thresholds/${id}`, data, { params: { updated_by: updatedBy } });
+export const deleteThreshold = (id) => api.delete(`/v1/thresholds/${id}`);
+export const getEffectiveThreshold = (contractorId, materialId) =>
+  api.get(`/v1/thresholds/effective/${contractorId}/${materialId}`);
+
+// Reconciliations
+export const submitReconciliation = (data) => api.post('/v1/reconciliations/submit', data);
+export const getReconciliations = (params) => api.get('/v1/reconciliations', { params });
+export const getReconciliation = (id) => api.get(`/v1/reconciliations/${id}`);
+export const reviewReconciliation = (id, data) => api.put(`/v1/reconciliations/${id}/review`, data);
+export const getPendingReconciliations = () => api.get('/v1/reconciliations/pending-review');
+export const getContractorReconciliations = (contractorId, params) =>
+  api.get(`/v1/contractors/${contractorId}/reconciliations`, { params });
 
 export default api;
