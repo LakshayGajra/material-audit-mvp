@@ -55,6 +55,7 @@ class Audit(Base):
     __table_args__ = (
         Index("ix_audits_contractor_date", "contractor_id", "audit_date"),
         Index("ix_audits_status", "status"),
+        Index("ix_audits_contractor_status_date", "contractor_id", "status", "audit_date"),
     )
 
     def __repr__(self):

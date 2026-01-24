@@ -27,6 +27,8 @@ import PurchaseOrdersPage from './components/PurchaseOrdersPage';
 import RejectionsPage from './components/RejectionsPage';
 import AuditsPage from './components/AuditsPage';
 import ThresholdsPage from './components/ThresholdsPage';
+import ReconciliationPage from './components/ReconciliationPage';
+import DashboardPage from './components/DashboardPage';
 
 const theme = createTheme({
   palette: {
@@ -100,6 +102,7 @@ function App() {
             variant="scrollable"
             scrollButtons="auto"
           >
+            <Tab label="Dashboard" />
             <Tab label="Materials" />
             <Tab label="Production" />
             <Tab label="Finished Goods" />
@@ -108,13 +111,19 @@ function App() {
             <Tab label="Purchase Orders" />
             <Tab label="Rejections" />
             <Tab label="Audits" />
+            <Tab label="Reconciliation" />
             <Tab label="Anomalies" />
             <Tab label="Thresholds" />
           </Tabs>
         </Box>
 
-        {/* Tab 0: Materials */}
+        {/* Tab 0: Dashboard */}
         {tab === 0 && (
+          <DashboardPage onNavigate={(tabIndex) => setTab(tabIndex)} />
+        )}
+
+        {/* Tab 1: Materials */}
+        {tab === 1 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 4 }}>
               <IssueMaterialForm
@@ -133,8 +142,8 @@ function App() {
           </Grid>
         )}
 
-        {/* Tab 1: Production */}
-        {tab === 1 && (
+        {/* Tab 2: Production */}
+        {tab === 2 && (
           <Grid container spacing={3}>
             <Grid size={{ xs: 12, md: 4 }}>
               <ReportProductionForm
@@ -152,37 +161,37 @@ function App() {
           </Grid>
         )}
 
-        {/* Tab 2: Finished Goods */}
-        {tab === 2 && (
+        {/* Tab 3: Finished Goods */}
+        {tab === 3 && (
           <FinishedGoodsPage />
         )}
 
-        {/* Tab 3: BOM */}
-        {tab === 3 && (
+        {/* Tab 4: BOM */}
+        {tab === 4 && (
           <BOMManagement
             finishedGoods={finishedGoods}
             materials={materials}
           />
         )}
 
-        {/* Tab 4: Warehouse */}
-        {tab === 4 && (
+        {/* Tab 5: Warehouse */}
+        {tab === 5 && (
           <WarehousePage
             materials={materials}
             refreshKey={refreshKey}
           />
         )}
 
-        {/* Tab 5: Purchase Orders */}
-        {tab === 5 && (
+        {/* Tab 6: Purchase Orders */}
+        {tab === 6 && (
           <PurchaseOrdersPage
             materials={materials}
             refreshKey={refreshKey}
           />
         )}
 
-        {/* Tab 6: Rejections */}
-        {tab === 6 && (
+        {/* Tab 7: Rejections */}
+        {tab === 7 && (
           <RejectionsPage
             contractors={contractors}
             materials={materials}
@@ -190,21 +199,30 @@ function App() {
           />
         )}
 
-        {/* Tab 7: Audits */}
-        {tab === 7 && (
+        {/* Tab 8: Audits */}
+        {tab === 8 && (
           <AuditsPage
             contractors={contractors}
             refreshKey={refreshKey}
           />
         )}
 
-        {/* Tab 8: Anomalies */}
-        {tab === 8 && (
+        {/* Tab 9: Reconciliation */}
+        {tab === 9 && (
+          <ReconciliationPage
+            contractors={contractors}
+            materials={materials}
+            refreshKey={refreshKey}
+          />
+        )}
+
+        {/* Tab 10: Anomalies */}
+        {tab === 10 && (
           <AnomalyList />
         )}
 
-        {/* Tab 9: Thresholds */}
-        {tab === 9 && (
+        {/* Tab 11: Thresholds */}
+        {tab === 11 && (
           <ThresholdsPage
             contractors={contractors}
             materials={materials}

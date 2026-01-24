@@ -117,4 +117,17 @@ export const getPendingReconciliations = () => api.get('/v1/reconciliations/pend
 export const getContractorReconciliations = (contractorId, params) =>
   api.get(`/v1/contractors/${contractorId}/reconciliations`, { params });
 
+// Dashboard
+export const getDashboardSummary = () => api.get('/v1/dashboard/summary');
+
+// Reports
+export const getInventorySummaryReport = () =>
+  api.get('/v1/reports/inventory-summary', { responseType: 'blob' });
+export const getMaterialMovementReport = (materialId, params) =>
+  api.get(`/v1/reports/material-movement/${materialId}`, { params });
+export const getContractorAuditHistoryReport = (contractorId) =>
+  api.get(`/v1/reports/contractor-audit-history/${contractorId}`, { responseType: 'blob' });
+export const getAnomalyReport = (params) =>
+  api.get('/v1/reports/anomaly-report', { params, responseType: 'blob' });
+
 export default api;

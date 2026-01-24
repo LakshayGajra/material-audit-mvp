@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, Float, ForeignKey, DateTime
+from sqlalchemy import Column, Integer, Float, ForeignKey, DateTime, Index
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.database import Base
@@ -17,3 +17,8 @@ class Consumption(Base):
     production_record = relationship("ProductionRecord", backref="consumptions")
     contractor = relationship("Contractor", backref="consumptions")
     material = relationship("Material", backref="consumptions")
+
+    # Indexes for efficient queries
+    __table_args__ = (
+        Index("ix_consumption_contractor_material_date", "contractor_id", "material_id", "consumed_at"),
+    )

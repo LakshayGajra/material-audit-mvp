@@ -65,6 +65,7 @@ class MaterialRejection(Base):
         Index("ix_material_rejections_contractor_material", "contractor_id", "material_id"),
         Index("ix_material_rejections_status", "status"),
         Index("ix_material_rejections_rejection_date", "rejection_date"),
+        Index("ix_material_rejections_contractor_status", "contractor_id", "status"),
     )
 
     def __repr__(self):

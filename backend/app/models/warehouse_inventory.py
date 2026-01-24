@@ -22,6 +22,7 @@ class WarehouseInventory(Base):
 
     __table_args__ = (
         UniqueConstraint('warehouse_id', 'material_id', name='uq_warehouse_material'),
+        # Explicit index for query performance (UniqueConstraint creates one, but this is explicit)
     )
 
     def __repr__(self):
