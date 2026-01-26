@@ -103,7 +103,7 @@ function App() {
                   materials={materials}
                   onSuccess={handleRefresh}
                 />
-                <ContractorList contractors={contractors} />
+                <ContractorList contractors={contractors} onContractorCreated={loadContractors} />
               </Grid>
               <Grid size={{ xs: 12, md: 8 }}>
                 <ContractorInventory
