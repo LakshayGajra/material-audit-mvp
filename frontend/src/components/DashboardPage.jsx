@@ -219,7 +219,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<ShippingIcon />}
-              onClick={() => onNavigate?.(1)}
+              onClick={() => onNavigate?.({ module: 1, subTab: 0 })}
               fullWidth
             >
               Issue Material
@@ -227,7 +227,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<StartIcon />}
-              onClick={() => onNavigate?.(8)}
+              onClick={() => onNavigate?.({ module: 2, subTab: 0 })}
               fullWidth
             >
               Start Audit
@@ -235,7 +235,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
-              onClick={() => onNavigate?.(6)}
+              onClick={() => onNavigate?.({ module: 1, subTab: 2 })}
               fullWidth
             >
               Create Purchase Order
@@ -243,7 +243,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<ReceiptIcon />}
-              onClick={() => onNavigate?.(9)}
+              onClick={() => onNavigate?.({ module: 2, subTab: 1 })}
               fullWidth
             >
               Submit Reconciliation

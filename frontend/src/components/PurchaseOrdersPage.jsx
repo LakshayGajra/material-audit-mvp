@@ -29,6 +29,7 @@ import {
   List,
   ListItem,
   ListItemText,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -38,6 +39,7 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
   LocalShipping as ShippingIcon,
+  Receipt as ReceiptIcon,
 } from '@mui/icons-material';
 import {
   getPurchaseOrders,
@@ -52,6 +54,7 @@ import {
   createGoodsReceipt,
   getPOGoodsReceipts,
 } from '../api';
+import { DataTable, ConfirmDialog } from './common';
 
 const STATUS_COLORS = {
   DRAFT: 'default',
@@ -76,6 +79,8 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
   const [viewDialog, setViewDialog] = useState(false);
   const [grnDialog, setGrnDialog] = useState(false);
   const [supplierDialog, setSupplierDialog] = useState(false);
+  const [cancelConfirmDialog, setCancelConfirmDialog] = useState(false);
+  const [poToCancel, setPOToCancel] = useState(null);
   const [selectedPO, setSelectedPO] = useState(null);
   const [poGRNs, setPOGRNs] = useState([]);
 
@@ -207,13 +212,22 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
     }
   };
 
-  const handleCancelPO = async (poId) => {
+  const openCancelConfirm = (po) => {
+    setPOToCancel(po);
+    setCancelConfirmDialog(true);
+  };
+
+  const handleCancelPO = async () => {
+    if (!poToCancel) return;
     try {
-      await cancelPurchaseOrder(poId);
+      await cancelPurchaseOrder(poToCancel.id);
       setSuccess('Purchase order cancelled');
+      setCancelConfirmDialog(false);
+      setPOToCancel(null);
       loadOrders();
-      if (selectedPO?.id === poId) {
-        handleViewPO(poId);
+      if (selectedPO?.id === poToCancel.id) {
+        setViewDialog(false);
+        setSelectedPO(null);
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to cancel purchase order');
@@ -342,67 +356,75 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
       {/* PO List */}
       <Grid size={12}>
         <Paper sx={{ p: 3 }}>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>PO Number</TableCell>
-                  <TableCell>Supplier</TableCell>
-                  <TableCell>Warehouse</TableCell>
-                  <TableCell>Status</TableCell>
-                  <TableCell align="right">Total</TableCell>
-                  <TableCell>Expected Delivery</TableCell>
-                  <TableCell>Actions</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {orders.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">No purchase orders</TableCell>
-                  </TableRow>
-                ) : (
-                  orders.map((po) => (
-                    <TableRow key={po.id}>
-                      <TableCell>{po.po_number}</TableCell>
-                      <TableCell>{po.supplier_name}</TableCell>
-                      <TableCell>{po.warehouse_name}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={po.status}
-                          color={STATUS_COLORS[po.status] || 'default'}
-                          size="small"
-                        />
-                      </TableCell>
-                      <TableCell align="right">
-                        ${po.total_amount?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                      </TableCell>
-                      <TableCell>{po.expected_delivery || '-'}</TableCell>
-                      <TableCell>
-                        <IconButton size="small" onClick={() => handleViewPO(po.id)} title="View">
-                          <ViewIcon />
-                        </IconButton>
-                        {po.status === 'DRAFT' && (
-                          <IconButton size="small" onClick={() => handleSubmitPO(po.id)} title="Submit">
-                            <SendIcon color="primary" />
-                          </IconButton>
-                        )}
-                        {po.status === 'SUBMITTED' && (
-                          <>
-                            <IconButton size="small" onClick={() => handleApprovePO(po.id)} title="Approve">
-                              <CheckIcon color="success" />
-                            </IconButton>
-                            <IconButton size="small" onClick={() => handleCancelPO(po.id)} title="Cancel">
-                              <CloseIcon color="error" />
-                            </IconButton>
-                          </>
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
+          <DataTable
+            columns={[
+              { id: 'po_number', label: 'PO Number' },
+              { id: 'supplier_name', label: 'Supplier' },
+              { id: 'warehouse_name', label: 'Warehouse' },
+              {
+                id: 'status',
+                label: 'Status',
+                render: (val) => (
+                  <Chip
+                    label={val}
+                    color={STATUS_COLORS[val] || 'default'}
+                    size="small"
+                  />
+                ),
+              },
+              {
+                id: 'total_amount',
+                label: 'Total',
+                align: 'right',
+                render: (val) => `$${val?.toLocaleString(undefined, { minimumFractionDigits: 2 })}`,
+              },
+              {
+                id: 'expected_delivery',
+                label: 'Expected Delivery',
+                render: (val) => val || '-',
+              },
+            ]}
+            data={orders}
+            searchPlaceholder="Search purchase orders..."
+            searchFields={['po_number', 'supplier_name', 'warehouse_name', 'status']}
+            renderRowActions={(po) => (
+              <>
+                <Tooltip title="View details">
+                  <IconButton size="small" onClick={() => handleViewPO(po.id)}>
+                    <ViewIcon />
+                  </IconButton>
+                </Tooltip>
+                {po.status === 'DRAFT' && (
+                  <Tooltip title="Submit for approval">
+                    <IconButton size="small" onClick={() => handleSubmitPO(po.id)}>
+                      <SendIcon color="primary" />
+                    </IconButton>
+                  </Tooltip>
                 )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                {po.status === 'SUBMITTED' && (
+                  <>
+                    <Tooltip title="Approve">
+                      <IconButton size="small" onClick={() => handleApprovePO(po.id)}>
+                        <CheckIcon color="success" />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Cancel">
+                      <IconButton size="small" onClick={() => openCancelConfirm(po)}>
+                        <CloseIcon color="error" />
+                      </IconButton>
+                    </Tooltip>
+                  </>
+                )}
+              </>
+            )}
+            emptyState={{
+              icon: ReceiptIcon,
+              title: 'No purchase orders',
+              description: 'Create your first purchase order to start tracking material procurement.',
+              actionLabel: 'New Purchase Order',
+              onAction: () => setCreateDialog(true),
+            }}
+          />
         </Paper>
       </Grid>
 
@@ -653,7 +675,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
               <Button onClick={() => handleApprovePO(selectedPO.id)} color="success" startIcon={<CheckIcon />}>
                 Approve
               </Button>
-              <Button onClick={() => handleCancelPO(selectedPO.id)} color="error" startIcon={<CloseIcon />}>
+              <Button onClick={() => openCancelConfirm(selectedPO)} color="error" startIcon={<CloseIcon />}>
                 Cancel
               </Button>
             </>
@@ -795,6 +817,20 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Cancel PO Confirmation Dialog */}
+      <ConfirmDialog
+        open={cancelConfirmDialog}
+        onClose={() => {
+          setCancelConfirmDialog(false);
+          setPOToCancel(null);
+        }}
+        onConfirm={handleCancelPO}
+        title="Cancel Purchase Order?"
+        message={`Are you sure you want to cancel PO ${poToCancel?.po_number}? This action cannot be undone.`}
+        confirmLabel="Cancel PO"
+        variant="danger"
+      />
     </Grid>
   );
 }

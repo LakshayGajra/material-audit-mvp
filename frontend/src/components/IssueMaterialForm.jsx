@@ -11,8 +11,12 @@ import {
   Box,
   Alert,
   Chip,
+  FormHelperText,
+  InputAdornment,
 } from '@mui/material';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import { createIssuance, getWarehouses, getWarehouseInventory } from '../api';
+import { CollapsibleSection } from './common';
 
 export default function IssueMaterialForm({ contractors, materials, onSuccess }) {
   const [warehouseId, setWarehouseId] = useState('');
@@ -20,8 +24,13 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
   const [materialId, setMaterialId] = useState('');
   const [quantity, setQuantity] = useState('');
   const [issuedBy, setIssuedBy] = useState('');
+  const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+
+  // Validation state
+  const [touched, setTouched] = useState({});
 
   const [warehouses, setWarehouses] = useState([]);
   const [warehouseInventory, setWarehouseInventory] = useState([]);
@@ -54,6 +63,10 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
       const res = await getWarehouses();
       const data = res.data.items || res.data;
       setWarehouses(data);
+      // Smart default: auto-select if only one warehouse
+      if (data.length === 1) {
+        setWarehouseId(data[0].id);
+      }
     } catch (err) {
       console.error('Failed to load warehouses', err);
     }
@@ -69,17 +82,65 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
     }
   };
 
+  // Validation helpers
+  const validateQuantity = () => {
+    if (!quantity) return 'Quantity is required';
+    const qty = parseFloat(quantity);
+    if (isNaN(qty) || qty <= 0) return 'Enter a valid quantity';
+    if (availableQty !== null && qty > availableQty) {
+      return `Exceeds available stock (${availableQty})`;
+    }
+    return '';
+  };
+
+  const getFieldError = (field) => {
+    if (!touched[field]) return '';
+    switch (field) {
+      case 'warehouse':
+        return !warehouseId ? 'Select a warehouse' : '';
+      case 'contractor':
+        return !contractorId ? 'Select a contractor' : '';
+      case 'material':
+        return !materialId ? 'Select a material' : '';
+      case 'quantity':
+        return validateQuantity();
+      default:
+        return '';
+    }
+  };
+
+  const handleBlur = (field) => {
+    setTouched((prev) => ({ ...prev, [field]: true }));
+  };
+
+  const isFormValid = () => {
+    return (
+      warehouseId &&
+      contractorId &&
+      materialId &&
+      quantity &&
+      !validateQuantity()
+    );
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError('');
     setSuccess('');
 
-    // Validate quantity against available stock
-    if (availableQty !== null && parseFloat(quantity) > availableQty) {
-      setError(`Insufficient stock. Available: ${availableQty}`);
+    // Mark all fields as touched
+    setTouched({
+      warehouse: true,
+      contractor: true,
+      material: true,
+      quantity: true,
+    });
+
+    if (!isFormValid()) {
       return;
     }
 
+    setSubmitting(true);
     try {
       await createIssuance({
         warehouse_id: parseInt(warehouseId),
@@ -88,21 +149,28 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
         quantity: parseFloat(quantity),
         issued_date: new Date().toISOString().split('T')[0],
         issued_by: issuedBy || 'System',
+        notes: notes || null,
       });
       setSuccess('Material issued successfully!');
-      setWarehouseId('');
+      // Reset form
       setContractorId('');
       setMaterialId('');
       setQuantity('');
       setIssuedBy('');
+      setNotes('');
       setAvailableQty(null);
+      setTouched({});
       onSuccess?.();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to issue material');
+    } finally {
+      setSubmitting(false);
     }
   };
 
   const selectedMaterial = materials.find((m) => m.id === parseInt(materialId));
+  const quantityError = getFieldError('quantity');
+  const isQuantityValid = touched.quantity && !quantityError && quantity;
 
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
@@ -122,7 +190,13 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
       )}
 
       <Box component="form" onSubmit={handleSubmit}>
-        <FormControl fullWidth sx={{ mb: 2 }}>
+        {/* Essential Fields */}
+        <FormControl
+          fullWidth
+          sx={{ mb: 2 }}
+          error={!!getFieldError('warehouse')}
+          required
+        >
           <InputLabel>Warehouse</InputLabel>
           <Select
             value={warehouseId}
@@ -132,7 +206,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
               setMaterialId('');
               setAvailableQty(null);
             }}
-            required
+            onBlur={() => handleBlur('warehouse')}
           >
             {warehouses.map((wh) => (
               <MenuItem key={wh.id} value={wh.id}>
@@ -140,15 +214,23 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
               </MenuItem>
             ))}
           </Select>
+          {getFieldError('warehouse') && (
+            <FormHelperText>{getFieldError('warehouse')}</FormHelperText>
+          )}
         </FormControl>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
+        <FormControl
+          fullWidth
+          sx={{ mb: 2 }}
+          error={!!getFieldError('contractor')}
+          required
+        >
           <InputLabel>Contractor</InputLabel>
           <Select
             value={contractorId}
             label="Contractor"
             onChange={(e) => setContractorId(e.target.value)}
-            required
+            onBlur={() => handleBlur('contractor')}
           >
             {contractors.map((c) => (
               <MenuItem key={c.id} value={c.id}>
@@ -156,16 +238,24 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
               </MenuItem>
             ))}
           </Select>
+          {getFieldError('contractor') && (
+            <FormHelperText>{getFieldError('contractor')}</FormHelperText>
+          )}
         </FormControl>
 
-        <FormControl fullWidth sx={{ mb: 2 }}>
+        <FormControl
+          fullWidth
+          sx={{ mb: 2 }}
+          error={!!getFieldError('material')}
+          required
+          disabled={!warehouseId}
+        >
           <InputLabel>Material</InputLabel>
           <Select
             value={materialId}
             label="Material"
             onChange={(e) => setMaterialId(e.target.value)}
-            required
-            disabled={!warehouseId}
+            onBlur={() => handleBlur('material')}
           >
             {materials.map((m) => {
               const invItem = warehouseInventory.find((i) => i.material_id === m.id);
@@ -185,6 +275,9 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
               );
             })}
           </Select>
+          {getFieldError('material') && (
+            <FormHelperText>{getFieldError('material')}</FormHelperText>
+          )}
         </FormControl>
 
         {availableQty !== null && (
@@ -202,39 +295,59 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
           type="number"
           value={quantity}
           onChange={(e) => setQuantity(e.target.value)}
+          onBlur={() => handleBlur('quantity')}
           required
           sx={{ mb: 2 }}
-          inputProps={{ min: 0, step: 0.01 }}
-          error={availableQty !== null && parseFloat(quantity) > availableQty}
-          helperText={
-            availableQty !== null && parseFloat(quantity) > availableQty
-              ? 'Quantity exceeds available stock'
-              : ''
-          }
+          error={!!quantityError}
+          helperText={quantityError || (selectedMaterial ? `Unit: ${selectedMaterial.unit}` : '')}
+          slotProps={{
+            input: {
+              min: 0,
+              step: 0.01,
+              endAdornment: isQuantityValid ? (
+                <InputAdornment position="end">
+                  <CheckCircleIcon color="success" fontSize="small" />
+                </InputAdornment>
+              ) : null,
+            },
+          }}
         />
 
-        <TextField
-          fullWidth
-          label="Issued By"
-          value={issuedBy}
-          onChange={(e) => setIssuedBy(e.target.value)}
-          sx={{ mb: 2 }}
-          placeholder="Enter your name"
-        />
+        {/* Optional Fields - Collapsed by default */}
+        <CollapsibleSection
+          title="Additional Details"
+          expandLabel="Add notes & details (optional)"
+          subtitle="Issued by, notes"
+        >
+          <TextField
+            fullWidth
+            label="Issued By"
+            value={issuedBy}
+            onChange={(e) => setIssuedBy(e.target.value)}
+            sx={{ mb: 2 }}
+            placeholder="Enter your name"
+            helperText="Leave blank to use 'System'"
+          />
+
+          <TextField
+            fullWidth
+            label="Notes"
+            value={notes}
+            onChange={(e) => setNotes(e.target.value)}
+            multiline
+            rows={2}
+            placeholder="Optional notes about this issuance"
+          />
+        </CollapsibleSection>
 
         <Button
           type="submit"
           variant="contained"
           fullWidth
-          disabled={
-            !warehouseId ||
-            !contractorId ||
-            !materialId ||
-            !quantity ||
-            (availableQty !== null && parseFloat(quantity) > availableQty)
-          }
+          disabled={submitting}
+          sx={{ mt: 3 }}
         >
-          Issue Material
+          {submitting ? 'Issuing...' : 'Issue Material'}
         </Button>
       </Box>
     </Paper>

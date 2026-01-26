@@ -6,15 +6,12 @@ import {
   InputLabel,
   Select,
   MenuItem,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Box,
 } from '@mui/material';
+import InventoryIcon from '@mui/icons-material/Inventory';
+import PersonIcon from '@mui/icons-material/Person';
 import { getContractorInventory } from '../api';
+import { DataTable, EmptyState } from './common';
 
 export default function ContractorInventory({ contractors, refreshKey }) {
   const [selectedContractor, setSelectedContractor] = useState('');
@@ -34,6 +31,22 @@ export default function ContractorInventory({ contractors, refreshKey }) {
       console.error('Failed to load inventory:', err);
     }
   };
+
+  const columns = [
+    { id: 'material_code', label: 'Material Code' },
+    { id: 'material_name', label: 'Material Name' },
+    {
+      id: 'quantity',
+      label: 'Quantity',
+      align: 'right',
+      render: (val) => val?.toLocaleString(),
+    },
+    {
+      id: 'last_updated',
+      label: 'Last Updated',
+      render: (val) => (val ? new Date(val).toLocaleString() : '-'),
+    },
+  ];
 
   return (
     <Paper sx={{ p: 3 }}>
@@ -56,47 +69,24 @@ export default function ContractorInventory({ contractors, refreshKey }) {
         </Select>
       </FormControl>
 
-      {selectedContractor && (
-        <TableContainer>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>Material Code</TableCell>
-                <TableCell>Material Name</TableCell>
-                <TableCell align="right">Quantity</TableCell>
-                <TableCell>Last Updated</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {inventory.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={4} align="center">
-                    No inventory found
-                  </TableCell>
-                </TableRow>
-              ) : (
-                inventory.map((item) => (
-                  <TableRow key={item.id}>
-                    <TableCell>{item.material_code}</TableCell>
-                    <TableCell>{item.material_name}</TableCell>
-                    <TableCell align="right">{item.quantity}</TableCell>
-                    <TableCell>
-                      {item.last_updated
-                        ? new Date(item.last_updated).toLocaleString()
-                        : '-'}
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
-
-      {!selectedContractor && (
-        <Box sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
-          Select a contractor to view inventory
-        </Box>
+      {selectedContractor ? (
+        <DataTable
+          columns={columns}
+          data={inventory}
+          searchPlaceholder="Search materials..."
+          searchFields={['material_code', 'material_name']}
+          emptyState={{
+            icon: InventoryIcon,
+            title: 'No inventory',
+            description: 'This contractor has no materials issued yet.',
+          }}
+        />
+      ) : (
+        <EmptyState
+          icon={PersonIcon}
+          title="Select a contractor"
+          description="Choose a contractor from the dropdown to view their inventory."
+        />
       )}
     </Paper>
   );

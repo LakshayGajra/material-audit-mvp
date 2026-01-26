@@ -77,6 +77,7 @@ export default function AuditsPage({ contractors, refreshKey }) {
   const [newAudit, setNewAudit] = useState({
     contractor_id: '',
     auditor_name: '',
+    audit_type: 'SCHEDULED',
     notes: '',
   });
 
@@ -103,11 +104,12 @@ export default function AuditsPage({ contractors, refreshKey }) {
       const res = await startAudit({
         contractor_id: parseInt(newAudit.contractor_id),
         auditor_name: newAudit.auditor_name,
+        audit_type: newAudit.audit_type,
         notes: newAudit.notes || null,
       });
       setSuccess('Audit started successfully');
       setStartDialog(false);
-      setNewAudit({ contractor_id: '', auditor_name: '', notes: '' });
+      setNewAudit({ contractor_id: '', auditor_name: '', audit_type: 'SCHEDULED', notes: '' });
       // Load the audit for counting
       await loadAuditForCounting(res.data.id);
     } catch (err) {
@@ -453,6 +455,19 @@ export default function AuditsPage({ contractors, refreshKey }) {
               required
               fullWidth
             />
+
+            <FormControl fullWidth>
+              <InputLabel>Audit Type</InputLabel>
+              <Select
+                value={newAudit.audit_type}
+                label="Audit Type"
+                onChange={(e) => setNewAudit({ ...newAudit, audit_type: e.target.value })}
+              >
+                <MenuItem value="SCHEDULED">Scheduled</MenuItem>
+                <MenuItem value="SURPRISE">Surprise</MenuItem>
+                <MenuItem value="FOLLOW_UP">Follow Up</MenuItem>
+              </Select>
+            </FormControl>
 
             <TextField
               label="Notes"

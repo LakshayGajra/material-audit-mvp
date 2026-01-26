@@ -3,12 +3,6 @@ import {
   Paper,
   Typography,
   Grid,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Button,
   TextField,
   Alert,
@@ -23,13 +17,13 @@ import {
   DialogContent,
   DialogActions,
   IconButton,
-  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Warning as WarningIcon,
   Inventory as InventoryIcon,
   Refresh as RefreshIcon,
+  Warehouse as WarehouseIcon,
 } from '@mui/icons-material';
 import {
   getWarehouses,
@@ -39,6 +33,7 @@ import {
   addWarehouseInventory,
   updateWarehouseInventory,
 } from '../api';
+import { DataTable } from './common';
 
 export default function WarehousePage({ materials, refreshKey }) {
   const [warehouses, setWarehouses] = useState([]);
@@ -235,67 +230,72 @@ export default function WarehousePage({ materials, refreshKey }) {
             </Alert>
           )}
 
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Material Code</TableCell>
-                  <TableCell>Material Name</TableCell>
-                  <TableCell align="right">Current Qty</TableCell>
-                  <TableCell>Unit</TableCell>
-                  <TableCell align="right">Reorder Point</TableCell>
-                  <TableCell align="right">Reorder Qty</TableCell>
-                  <TableCell>Status</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inventory.length === 0 ? (
-                  <TableRow>
-                    <TableCell colSpan={7} align="center">
-                      {loading ? 'Loading...' : 'No inventory items'}
-                    </TableCell>
-                  </TableRow>
-                ) : (
-                  inventory.map((item) => (
-                    <TableRow
-                      key={item.id}
-                      sx={{
-                        backgroundColor: isLowStock(item.material_id)
-                          ? 'rgba(255, 152, 0, 0.1)'
-                          : 'inherit',
-                      }}
-                    >
-                      <TableCell>{item.material_code}</TableCell>
-                      <TableCell>{item.material_name}</TableCell>
-                      <TableCell align="right">
-                        <Typography
-                          color={isLowStock(item.material_id) ? 'warning.main' : 'inherit'}
-                          fontWeight={isLowStock(item.material_id) ? 'bold' : 'normal'}
-                        >
-                          {item.current_quantity?.toLocaleString()}
-                        </Typography>
-                      </TableCell>
-                      <TableCell>{item.unit_of_measure}</TableCell>
-                      <TableCell align="right">{item.reorder_point?.toLocaleString()}</TableCell>
-                      <TableCell align="right">{item.reorder_quantity?.toLocaleString()}</TableCell>
-                      <TableCell>
-                        {isLowStock(item.material_id) ? (
-                          <Chip
-                            label="Low Stock"
-                            color="warning"
-                            size="small"
-                            icon={<WarningIcon />}
-                          />
-                        ) : (
-                          <Chip label="OK" color="success" size="small" />
-                        )}
-                      </TableCell>
-                    </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+          <DataTable
+            columns={[
+              { id: 'material_code', label: 'Material Code' },
+              { id: 'material_name', label: 'Material Name' },
+              {
+                id: 'current_quantity',
+                label: 'Current Qty',
+                align: 'right',
+                render: (val, row) => (
+                  <Typography
+                    component="span"
+                    color={isLowStock(row.material_id) ? 'warning.main' : 'inherit'}
+                    fontWeight={isLowStock(row.material_id) ? 600 : 'normal'}
+                  >
+                    {val?.toLocaleString()}
+                  </Typography>
+                ),
+              },
+              { id: 'unit_of_measure', label: 'Unit' },
+              {
+                id: 'reorder_point',
+                label: 'Reorder Point',
+                align: 'right',
+                render: (val) => val?.toLocaleString(),
+              },
+              {
+                id: 'reorder_quantity',
+                label: 'Reorder Qty',
+                align: 'right',
+                render: (val) => val?.toLocaleString(),
+              },
+              {
+                id: 'status',
+                label: 'Status',
+                sortable: false,
+                render: (val, row) =>
+                  isLowStock(row.material_id) ? (
+                    <Chip
+                      label="Low Stock"
+                      color="warning"
+                      size="small"
+                      icon={<WarningIcon />}
+                    />
+                  ) : (
+                    <Chip label="OK" color="success" size="small" />
+                  ),
+              },
+            ]}
+            data={inventory}
+            searchPlaceholder="Search inventory..."
+            searchFields={['material_code', 'material_name']}
+            getRowStyle={(row) => ({
+              backgroundColor: isLowStock(row.material_id)
+                ? 'rgba(245, 158, 11, 0.08)'
+                : 'inherit',
+            })}
+            emptyState={{
+              icon: WarehouseIcon,
+              title: loading ? 'Loading...' : 'No inventory items',
+              description: selectedWarehouse
+                ? 'Add inventory items to track stock levels.'
+                : 'Select a warehouse to view inventory.',
+              actionLabel: selectedWarehouse ? 'Add Inventory' : undefined,
+              onAction: selectedWarehouse ? () => setInventoryDialog(true) : undefined,
+            }}
+          />
         </Paper>
       </Grid>
 

@@ -2,26 +2,25 @@ import { useState, useEffect } from 'react';
 import {
   Paper,
   Typography,
-  Table,
-  TableBody,
-  TableCell,
-  TableContainer,
-  TableHead,
-  TableRow,
   Button,
   Chip,
   Box,
   ToggleButton,
   ToggleButtonGroup,
   Alert,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
 import { getAnomalies, resolveAnomaly } from '../api';
+import { DataTable } from './common';
 
 export default function AnomalyList() {
   const [anomalies, setAnomalies] = useState([]);
   const [filter, setFilter] = useState('unresolved');
   const [error, setError] = useState('');
+  const [success, setSuccess] = useState('');
 
   useEffect(() => {
     loadAnomalies();
@@ -41,6 +40,7 @@ export default function AnomalyList() {
     setError('');
     try {
       await resolveAnomaly(anomalyId);
+      setSuccess('Anomaly resolved successfully');
       loadAnomalies();
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to resolve anomaly');
@@ -51,12 +51,103 @@ export default function AnomalyList() {
     return new Date(dateStr).toLocaleString();
   };
 
+  const columns = [
+    {
+      id: 'created_at',
+      label: 'Date',
+      render: (val) => formatDate(val),
+    },
+    {
+      id: 'contractor_name',
+      label: 'Contractor',
+    },
+    {
+      id: 'material_name',
+      label: 'Material',
+      render: (val, row) => `${row.material_code} - ${val}`,
+    },
+    {
+      id: 'anomaly_type',
+      label: 'Type',
+      render: (val) => (
+        <Chip
+          label={val}
+          size="small"
+          color={val === 'shortage' ? 'error' : 'warning'}
+        />
+      ),
+    },
+    {
+      id: 'expected_quantity',
+      label: 'Expected',
+      align: 'right',
+      render: (val) => val?.toFixed(2),
+    },
+    {
+      id: 'actual_quantity',
+      label: 'Actual',
+      align: 'right',
+      render: (val) => val?.toFixed(2),
+    },
+    {
+      id: 'variance_percent',
+      label: 'Variance %',
+      align: 'right',
+      render: (val) => (
+        <Typography
+          component="span"
+          sx={{ color: 'error.main', fontWeight: 600 }}
+        >
+          {val?.toFixed(2)}%
+        </Typography>
+      ),
+    },
+    {
+      id: 'resolved',
+      label: 'Status',
+      render: (val) =>
+        val ? (
+          <Chip
+            icon={<CheckCircleIcon />}
+            label="Resolved"
+            size="small"
+            color="success"
+            variant="outlined"
+          />
+        ) : (
+          <Chip label="Open" size="small" color="error" />
+        ),
+    },
+  ];
+
+  const renderRowActions = (row) => {
+    if (row.resolved) {
+      return (
+        <Typography variant="caption" color="text.secondary">
+          {row.resolved_at ? formatDate(row.resolved_at) : ''}
+        </Typography>
+      );
+    }
+    return (
+      <Tooltip title="Mark as resolved">
+        <IconButton
+          size="small"
+          color="success"
+          onClick={(e) => {
+            e.stopPropagation();
+            handleResolve(row.id);
+          }}
+        >
+          <CheckCircleIcon />
+        </IconButton>
+      </Tooltip>
+    );
+  };
+
   return (
     <Paper sx={{ p: 3 }}>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 3 }}>
-        <Typography variant="h6">
-          Anomalies
-        </Typography>
+        <Typography variant="h6">Anomalies</Typography>
         <ToggleButtonGroup
           value={filter}
           exclusive
@@ -69,84 +160,35 @@ export default function AnomalyList() {
         </ToggleButtonGroup>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
+      {error && (
+        <Alert severity="error" onClose={() => setError('')} sx={{ mb: 2 }}>
+          {error}
+        </Alert>
+      )}
+      {success && (
+        <Alert severity="success" onClose={() => setSuccess('')} sx={{ mb: 2 }}>
+          {success}
+        </Alert>
+      )}
 
-      <TableContainer>
-        <Table>
-          <TableHead>
-            <TableRow>
-              <TableCell>Date</TableCell>
-              <TableCell>Contractor</TableCell>
-              <TableCell>Material</TableCell>
-              <TableCell>Type</TableCell>
-              <TableCell align="right">Expected</TableCell>
-              <TableCell align="right">Actual</TableCell>
-              <TableCell align="right">Variance %</TableCell>
-              <TableCell>Status</TableCell>
-              <TableCell align="center">Actions</TableCell>
-            </TableRow>
-          </TableHead>
-          <TableBody>
-            {anomalies.length === 0 ? (
-              <TableRow>
-                <TableCell colSpan={9} align="center">
-                  No anomalies found
-                </TableCell>
-              </TableRow>
-            ) : (
-              anomalies.map((a) => (
-                <TableRow key={a.id} sx={{ bgcolor: a.resolved ? 'action.hover' : 'inherit' }}>
-                  <TableCell>{formatDate(a.created_at)}</TableCell>
-                  <TableCell>{a.contractor_name}</TableCell>
-                  <TableCell>{a.material_code} - {a.material_name}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={a.anomaly_type}
-                      size="small"
-                      color={a.anomaly_type === 'shortage' ? 'error' : 'warning'}
-                    />
-                  </TableCell>
-                  <TableCell align="right">{a.expected_quantity.toFixed(2)}</TableCell>
-                  <TableCell align="right">{a.actual_quantity.toFixed(2)}</TableCell>
-                  <TableCell align="right" sx={{ color: 'error.main', fontWeight: 'bold' }}>
-                    {a.variance_percent.toFixed(2)}%
-                  </TableCell>
-                  <TableCell>
-                    {a.resolved ? (
-                      <Chip
-                        icon={<CheckCircleIcon />}
-                        label="Resolved"
-                        size="small"
-                        color="success"
-                        variant="outlined"
-                      />
-                    ) : (
-                      <Chip label="Open" size="small" color="error" />
-                    )}
-                  </TableCell>
-                  <TableCell align="center">
-                    {!a.resolved && (
-                      <Button
-                        size="small"
-                        variant="contained"
-                        color="success"
-                        onClick={() => handleResolve(a.id)}
-                      >
-                        Resolve
-                      </Button>
-                    )}
-                    {a.resolved && a.resolved_at && (
-                      <Typography variant="caption" color="text.secondary">
-                        {formatDate(a.resolved_at)}
-                      </Typography>
-                    )}
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </TableContainer>
+      <DataTable
+        columns={columns}
+        data={anomalies}
+        searchPlaceholder="Search anomalies..."
+        searchFields={['contractor_name', 'material_code', 'material_name', 'anomaly_type']}
+        renderRowActions={renderRowActions}
+        getRowStyle={(row) => ({
+          bgcolor: row.resolved ? 'action.hover' : 'inherit',
+        })}
+        emptyState={{
+          icon: WarningIcon,
+          title: filter === 'unresolved' ? 'No open anomalies' : 'No anomalies found',
+          description:
+            filter === 'unresolved'
+              ? 'All anomalies have been resolved. Great job!'
+              : 'Anomalies will appear here when inventory discrepancies are detected.',
+        }}
+      />
     </Paper>
   );
 }
