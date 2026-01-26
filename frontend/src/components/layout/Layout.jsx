@@ -23,7 +23,6 @@ export default function Layout({
           flexGrow: 1,
           bgcolor: 'background.default',
           minHeight: '100vh',
-          ml: `${SIDEBAR_WIDTH}px`,
         }}
       >
         {/* Content Area */}
