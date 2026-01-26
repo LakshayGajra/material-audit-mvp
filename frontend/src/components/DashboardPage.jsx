@@ -219,7 +219,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<ShippingIcon />}
-              onClick={() => onNavigate?.({ module: 1, subTab: 0 })}
+              onClick={() => onNavigate?.({ module: 'inventory', subPage: 'stock' })}
               fullWidth
             >
               Issue Material
@@ -227,7 +227,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<StartIcon />}
-              onClick={() => onNavigate?.({ module: 2, subTab: 0 })}
+              onClick={() => onNavigate?.({ module: 'audits', subPage: 'audits' })}
               fullWidth
             >
               Start Audit
@@ -235,7 +235,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
-              onClick={() => onNavigate?.({ module: 1, subTab: 2 })}
+              onClick={() => onNavigate?.({ module: 'inventory', subPage: 'pos' })}
               fullWidth
             >
               Create Purchase Order
@@ -243,7 +243,7 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<ReceiptIcon />}
-              onClick={() => onNavigate?.({ module: 2, subTab: 1 })}
+              onClick={() => onNavigate?.({ module: 'audits', subPage: 'reconciliation' })}
               fullWidth
             >
               Submit Reconciliation

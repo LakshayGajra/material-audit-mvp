@@ -13,6 +13,7 @@ const theme = createTheme({
     primary: {
       main: '#1e40af',       // Deeper blue - less saturated
       light: '#3b82f6',
+      lighter: '#dbeafe',    // Very light blue for backgrounds
       dark: '#1e3a8a',
     },
     secondary: {

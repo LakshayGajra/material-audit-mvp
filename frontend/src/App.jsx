@@ -1,26 +1,31 @@
 import { useState, useEffect } from 'react';
-import {
-  Container,
-  Typography,
-  AppBar,
-  Toolbar,
-  CssBaseline,
-  ThemeProvider,
-  Tabs,
-  Tab,
-  Box,
-} from '@mui/material';
-import InventoryIcon from '@mui/icons-material/Inventory';
+import { CssBaseline, ThemeProvider, Grid } from '@mui/material';
 import { getContractors, getMaterials, getFinishedGoods } from './api';
-import DashboardPage from './components/DashboardPage';
-import InventoryModule from './components/modules/InventoryModule';
-import AuditsModule from './components/modules/AuditsModule';
-import SetupModule from './components/modules/SetupModule';
 import theme from './theme';
+import { Layout } from './components/layout';
+
+// Page components
+import DashboardPage from './components/DashboardPage';
+import IssueMaterialForm from './components/IssueMaterialForm';
+import ContractorInventory from './components/ContractorInventory';
+import ContractorList from './components/ContractorList';
+import WarehousePage from './components/WarehousePage';
+import PurchaseOrdersPage from './components/PurchaseOrdersPage';
+import RejectionsPage from './components/RejectionsPage';
+import AuditsPage from './components/AuditsPage';
+import ReconciliationPage from './components/ReconciliationPage';
+import AnomalyList from './components/AnomalyList';
+import FinishedGoodsPage from './components/FinishedGoodsPage';
+import BOMManagement from './components/BOMManagement';
+import ThresholdsPage from './components/ThresholdsPage';
+import LearnPage from './components/LearnPage';
 
 function App() {
-  const [module, setModule] = useState(0);
-  const [subTabs, setSubTabs] = useState({ 1: 0, 2: 0, 3: 0 });
+  // Navigation state
+  const [activeModule, setActiveModule] = useState('dashboard');
+  const [activeSubPage, setActiveSubPage] = useState(null);
+
+  // Data state
   const [contractors, setContractors] = useState([]);
   const [materials, setMaterials] = useState([]);
   const [finishedGoods, setFinishedGoods] = useState([]);
@@ -63,80 +68,148 @@ function App() {
     setRefreshKey((k) => k + 1);
     loadContractors();
     loadMaterials();
+    loadFinishedGoods();
   };
 
-  const handleNavigate = (target) => {
-    if (typeof target === 'number') {
-      setModule(target);
-    } else if (target && typeof target === 'object') {
-      setModule(target.module);
-      if (target.subTab !== undefined) {
-        setSubTabs((prev) => ({ ...prev, [target.module]: target.subTab }));
+  const handleNavigate = (route) => {
+    if (typeof route === 'string') {
+      // Simple module navigation
+      setActiveModule(route);
+      setActiveSubPage(null);
+    } else if (route && typeof route === 'object') {
+      // Module + subPage navigation
+      setActiveModule(route.module);
+      setActiveSubPage(route.subPage || null);
+    }
+  };
+
+  // Render the current page based on navigation state
+  const renderContent = () => {
+    // Dashboard
+    if (activeModule === 'dashboard') {
+      return <DashboardPage onNavigate={handleNavigate} />;
+    }
+
+    // Inventory module
+    if (activeModule === 'inventory') {
+      switch (activeSubPage) {
+        case 'stock':
+        default:
+          return (
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 4 }}>
+                <IssueMaterialForm
+                  contractors={contractors}
+                  materials={materials}
+                  onSuccess={handleRefresh}
+                />
+                <ContractorList contractors={contractors} />
+              </Grid>
+              <Grid size={{ xs: 12, md: 8 }}>
+                <ContractorInventory
+                  contractors={contractors}
+                  refreshKey={refreshKey}
+                />
+              </Grid>
+            </Grid>
+          );
+        case 'warehouses':
+          return (
+            <WarehousePage
+              materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
+        case 'pos':
+          return (
+            <PurchaseOrdersPage
+              materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
+        case 'rejections':
+          return (
+            <RejectionsPage
+              contractors={contractors}
+              materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
       }
     }
+
+    // Audits module
+    if (activeModule === 'audits') {
+      switch (activeSubPage) {
+        case 'audits':
+        default:
+          return (
+            <AuditsPage
+              contractors={contractors}
+              refreshKey={refreshKey}
+            />
+          );
+        case 'reconciliation':
+          return (
+            <ReconciliationPage
+              contractors={contractors}
+              materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
+        case 'anomalies':
+          return <AnomalyList />;
+      }
+    }
+
+    // Setup module
+    if (activeModule === 'setup') {
+      switch (activeSubPage) {
+        case 'products':
+        default:
+          return (
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FinishedGoodsPage />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <BOMManagement
+                  finishedGoods={finishedGoods}
+                  materials={materials}
+                />
+              </Grid>
+            </Grid>
+          );
+        case 'thresholds':
+          return (
+            <ThresholdsPage
+              contractors={contractors}
+              materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
+      }
+    }
+
+    // Learn page
+    if (activeModule === 'learn') {
+      return <LearnPage onNavigate={handleNavigate} />;
+    }
+
+    // Fallback to dashboard
+    return <DashboardPage onNavigate={handleNavigate} />;
   };
 
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
-      <AppBar position="static">
-        <Toolbar>
-          <InventoryIcon sx={{ mr: 2 }} />
-          <Typography variant="h6">Material Audit MVP</Typography>
-        </Toolbar>
-      </AppBar>
-
-      <Container maxWidth="xl" sx={{ mt: 3, mb: 4 }}>
-        <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
-          <Tabs
-            value={module}
-            onChange={(e, v) => setModule(v)}
-            variant="standard"
-          >
-            <Tab label="Dashboard" />
-            <Tab label="Inventory" />
-            <Tab label="Audits" />
-            <Tab label="Setup" />
-          </Tabs>
-        </Box>
-
-        {/* Module 0: Dashboard */}
-        {module === 0 && (
-          <DashboardPage onNavigate={handleNavigate} />
-        )}
-
-        {/* Module 1: Inventory */}
-        {module === 1 && (
-          <InventoryModule
-            contractors={contractors}
-            materials={materials}
-            refreshKey={refreshKey}
-            onRefresh={handleRefresh}
-            initialSubTab={subTabs[1]}
-          />
-        )}
-
-        {/* Module 2: Audits */}
-        {module === 2 && (
-          <AuditsModule
-            contractors={contractors}
-            materials={materials}
-            refreshKey={refreshKey}
-            initialSubTab={subTabs[2]}
-          />
-        )}
-
-        {/* Module 3: Setup */}
-        {module === 3 && (
-          <SetupModule
-            contractors={contractors}
-            materials={materials}
-            finishedGoods={finishedGoods}
-            refreshKey={refreshKey}
-            initialSubTab={subTabs[3]}
-          />
-        )}
-      </Container>
+      <Layout
+        activeModule={activeModule}
+        activeSubPage={activeSubPage}
+        onNavigate={handleNavigate}
+      >
+        {renderContent()}
+      </Layout>
     </ThemeProvider>
   );
 }
