@@ -66,9 +66,10 @@ export default function ThresholdsPage({ contractors, materials, refreshKey }) {
       if (materialFilter) params.material_id = materialFilter;
       if (contractorFilter) params.contractor_id = contractorFilter;
       const res = await getThresholds(params);
-      setThresholds(res.data.items || res.data);
+      setThresholds(res.data?.items || res.data || []);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load thresholds');
+      setThresholds([]);
     }
   };
 

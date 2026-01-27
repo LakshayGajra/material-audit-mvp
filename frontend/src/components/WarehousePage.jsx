@@ -72,13 +72,14 @@ export default function WarehousePage({ materials, refreshKey }) {
   const loadWarehouses = async () => {
     try {
       const res = await getWarehouses();
-      const data = res.data.items || res.data;
+      const data = res.data?.items || res.data || [];
       setWarehouses(data);
       if (data.length > 0 && !selectedWarehouse) {
         setSelectedWarehouse(data[0].id);
       }
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load warehouses');
+      setWarehouses([]);
     }
   };
 
@@ -86,9 +87,10 @@ export default function WarehousePage({ materials, refreshKey }) {
     setLoading(true);
     try {
       const res = await getWarehouseInventory(warehouseId);
-      setInventory(res.data);
+      setInventory(res.data || []);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load inventory');
+      setInventory([]);
     } finally {
       setLoading(false);
     }
@@ -97,7 +99,7 @@ export default function WarehousePage({ materials, refreshKey }) {
   const loadLowStockItems = async (warehouseId) => {
     try {
       const res = await getLowStockItems(warehouseId);
-      setLowStockItems(res.data.map((item) => item.material_id));
+      setLowStockItems((res.data || []).map((item) => item.material_id));
     } catch (err) {
       // Low stock endpoint might not exist, ignore error
       setLowStockItems([]);

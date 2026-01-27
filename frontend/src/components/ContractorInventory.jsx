@@ -26,9 +26,10 @@ export default function ContractorInventory({ contractors, refreshKey }) {
   const loadInventory = async () => {
     try {
       const res = await getContractorInventory(selectedContractor);
-      setInventory(res.data);
+      setInventory(res.data || []);
     } catch (err) {
       console.error('Failed to load inventory:', err);
+      setInventory([]);
     }
   };
 
@@ -61,7 +62,7 @@ export default function ContractorInventory({ contractors, refreshKey }) {
           label="Select Contractor"
           onChange={(e) => setSelectedContractor(e.target.value)}
         >
-          {contractors.map((c) => (
+          {(contractors || []).map((c) => (
             <MenuItem key={c.id} value={c.id}>
               {c.code} - {c.name}
             </MenuItem>

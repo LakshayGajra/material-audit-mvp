@@ -95,18 +95,20 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
       if (statusFilter) params.status = statusFilter;
       if (contractorFilter) params.contractor_id = contractorFilter;
       const res = await getRejections(params);
-      setRejections(res.data.items || res.data);
+      setRejections(res.data?.items || res.data || []);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load rejections');
+      setRejections([]);
     }
   };
 
   const loadWarehouses = async () => {
     try {
       const res = await getWarehouses();
-      setWarehouses(res.data.items || res.data);
+      setWarehouses(res.data?.items || res.data || []);
     } catch (err) {
       console.error('Failed to load warehouses', err);
+      setWarehouses([]);
     }
   };
 

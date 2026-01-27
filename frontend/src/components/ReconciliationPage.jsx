@@ -95,9 +95,10 @@ export default function ReconciliationPage({ contractors, materials, refreshKey 
     if (!selectedContractor) return;
     try {
       const res = await getContractorReconciliations(selectedContractor);
-      setReconciliations(res.data);
+      setReconciliations(res.data || []);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load reconciliations');
+      setReconciliations([]);
     }
   };
 
@@ -105,27 +106,30 @@ export default function ReconciliationPage({ contractors, materials, refreshKey 
     if (!selectedContractor) return;
     try {
       const res = await getContractorInventory(selectedContractor);
-      setContractorInventory(res.data);
+      setContractorInventory(res.data || []);
     } catch (err) {
       console.error('Failed to load inventory', err);
+      setContractorInventory([]);
     }
   };
 
   const loadPendingReconciliations = async () => {
     try {
       const res = await getPendingReconciliations();
-      setPendingReview(res.data);
+      setPendingReview(res.data || []);
     } catch (err) {
       console.error('Failed to load pending reconciliations', err);
+      setPendingReview([]);
     }
   };
 
   const loadAllReconciliations = async () => {
     try {
       const res = await getReconciliations({});
-      setReconciliations(res.data.items || res.data);
+      setReconciliations(res.data?.items || res.data || []);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load reconciliations');
+      setReconciliations([]);
     }
   };
 

@@ -29,9 +29,10 @@ export default function FinishedGoodsPage() {
   const loadFinishedGoods = async () => {
     try {
       const res = await getFinishedGoods();
-      setFinishedGoods(res.data);
+      setFinishedGoods(res.data || []);
     } catch (err) {
       console.error('Failed to load finished goods:', err);
+      setFinishedGoods([]);
     }
   };
 

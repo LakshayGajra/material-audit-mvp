@@ -61,7 +61,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
   const loadWarehouses = async () => {
     try {
       const res = await getWarehouses();
-      const data = res.data.items || res.data;
+      const data = res.data?.items || res.data || [];
       setWarehouses(data);
       // Smart default: auto-select if only one warehouse
       if (data.length === 1) {
@@ -69,13 +69,14 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
       }
     } catch (err) {
       console.error('Failed to load warehouses', err);
+      setWarehouses([]);
     }
   };
 
   const loadWarehouseInventory = async (whId) => {
     try {
       const res = await getWarehouseInventory(whId);
-      setWarehouseInventory(res.data);
+      setWarehouseInventory(res.data || []);
     } catch (err) {
       console.error('Failed to load warehouse inventory', err);
       setWarehouseInventory([]);
@@ -168,7 +169,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
     }
   };
 
-  const selectedMaterial = materials.find((m) => m.id === parseInt(materialId));
+  const selectedMaterial = (materials || []).find((m) => m.id === parseInt(materialId));
   const quantityError = getFieldError('quantity');
   const isQuantityValid = touched.quantity && !quantityError && quantity;
 
@@ -232,7 +233,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
             onChange={(e) => setContractorId(e.target.value)}
             onBlur={() => handleBlur('contractor')}
           >
-            {contractors.map((c) => (
+            {(contractors || []).map((c) => (
               <MenuItem key={c.id} value={c.id}>
                 {c.code} - {c.name}
               </MenuItem>
@@ -257,7 +258,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
             onChange={(e) => setMaterialId(e.target.value)}
             onBlur={() => handleBlur('material')}
           >
-            {materials.map((m) => {
+            {(materials || []).map((m) => {
               const invItem = warehouseInventory.find((i) => i.material_id === m.id);
               const available = invItem ? invItem.current_quantity : 0;
               return (

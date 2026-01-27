@@ -27,6 +27,7 @@ import {
   Category as ProductIcon,
   Tune as ThresholdIcon,
   School as LearnIcon,
+  Build as MaterialIcon,
 } from '@mui/icons-material';
 
 const SIDEBAR_WIDTH = 240;
@@ -63,6 +64,7 @@ const navigationConfig = [
     label: 'Setup',
     icon: SettingsIcon,
     children: [
+      { id: 'materials', label: 'Materials', icon: MaterialIcon },
       { id: 'products', label: 'Products & BOM', icon: ProductIcon },
       { id: 'thresholds', label: 'Thresholds', icon: ThresholdIcon },
     ],

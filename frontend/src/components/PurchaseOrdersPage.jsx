@@ -106,27 +106,30 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
     try {
       const params = statusFilter ? { status: statusFilter } : {};
       const res = await getPurchaseOrders(params);
-      setOrders(res.data.items || res.data);
+      setOrders(res.data?.items || res.data || []);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load purchase orders');
+      setOrders([]);
     }
   };
 
   const loadSuppliers = async () => {
     try {
       const res = await getSuppliers();
-      setSuppliers(res.data.items || res.data);
+      setSuppliers(res.data?.items || res.data || []);
     } catch (err) {
       console.error('Failed to load suppliers', err);
+      setSuppliers([]);
     }
   };
 
   const loadWarehouses = async () => {
     try {
       const res = await getWarehouses();
-      setWarehouses(res.data.items || res.data);
+      setWarehouses(res.data?.items || res.data || []);
     } catch (err) {
       console.error('Failed to load warehouses', err);
+      setWarehouses([]);
     }
   };
 

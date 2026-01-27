@@ -40,9 +40,10 @@ export default function BOMManagement({ finishedGoods, materials }) {
   const loadBOM = async () => {
     try {
       const res = await getBOM(selectedFG);
-      setBom(res.data);
+      setBom(res.data || { items: [] });
     } catch (err) {
       console.error('Failed to load BOM:', err);
+      setBom({ items: [] });
     }
   };
 
@@ -89,7 +90,7 @@ export default function BOMManagement({ finishedGoods, materials }) {
             label="Select Finished Good"
             onChange={(e) => setSelectedFG(e.target.value)}
           >
-            {finishedGoods.map((fg) => (
+            {(finishedGoods || []).map((fg) => (
               <MenuItem key={fg.id} value={fg.id}>
                 {fg.code} - {fg.name}
               </MenuItem>
@@ -116,7 +117,7 @@ export default function BOMManagement({ finishedGoods, materials }) {
                     onChange={(e) => setMaterialId(e.target.value)}
                     required
                   >
-                    {materials.map((m) => (
+                    {(materials || []).map((m) => (
                       <MenuItem key={m.id} value={m.id}>
                         {m.code} - {m.name} ({m.unit})
                       </MenuItem>

@@ -18,6 +18,7 @@ import AnomalyList from './components/AnomalyList';
 import FinishedGoodsPage from './components/FinishedGoodsPage';
 import BOMManagement from './components/BOMManagement';
 import ThresholdsPage from './components/ThresholdsPage';
+import MaterialsPage from './components/MaterialsPage';
 import LearnPage from './components/LearnPage';
 
 function App() {
@@ -40,27 +41,30 @@ function App() {
   const loadContractors = async () => {
     try {
       const res = await getContractors();
-      setContractors(res.data);
+      setContractors(res.data || []);
     } catch (err) {
       console.error('Failed to load contractors:', err);
+      setContractors([]);
     }
   };
 
   const loadMaterials = async () => {
     try {
       const res = await getMaterials();
-      setMaterials(res.data);
+      setMaterials(res.data || []);
     } catch (err) {
       console.error('Failed to load materials:', err);
+      setMaterials([]);
     }
   };
 
   const loadFinishedGoods = async () => {
     try {
       const res = await getFinishedGoods();
-      setFinishedGoods(res.data);
+      setFinishedGoods(res.data || []);
     } catch (err) {
       console.error('Failed to load finished goods:', err);
+      setFinishedGoods([]);
     }
   };
 
@@ -165,8 +169,10 @@ function App() {
     // Setup module
     if (activeModule === 'setup') {
       switch (activeSubPage) {
-        case 'products':
+        case 'materials':
         default:
+          return <MaterialsPage />;
+        case 'products':
           return (
             <Grid container spacing={3}>
               <Grid size={{ xs: 12, md: 6 }}>

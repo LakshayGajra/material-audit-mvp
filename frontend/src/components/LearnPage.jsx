@@ -30,6 +30,7 @@ import {
   Warning as AnomalyIcon,
   Category as ProductIcon,
   Tune as ThresholdIcon,
+  Build as MaterialIcon,
   CheckCircle as CheckIcon,
   ArrowForward as ArrowIcon,
   LightbulbOutlined as TipIcon,
@@ -215,6 +216,27 @@ const sections = [
         { name: 'Resolution', desc: 'Mark anomalies as resolved after investigation' },
       ],
       tip: 'Prioritize anomalies with high variance percentages for investigation.',
+    },
+  },
+  {
+    id: 'setup-materials',
+    title: 'Materials',
+    icon: MaterialIcon,
+    parent: 'Setup',
+    content: {
+      description: 'Define raw materials that are tracked in the system and issued to contractors.',
+      steps: [
+        'Click "Add Material" to create a new material',
+        'Enter a unique material code (e.g., MAT-001)',
+        'Enter the material name (e.g., Portland Cement 50kg)',
+        'Select the unit of measurement (kg, pcs, m, etc.)',
+      ],
+      features: [
+        { name: 'Material Code', desc: 'Unique identifier for each material' },
+        { name: 'Unit of Measurement', desc: 'Standard unit for tracking quantities' },
+        { name: 'Material List', desc: 'View all materials registered in the system' },
+      ],
+      tip: 'Create all your materials first before setting up warehouses, BOMs, or issuing to contractors.',
     },
   },
   {

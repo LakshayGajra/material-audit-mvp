@@ -91,9 +91,10 @@ export default function AuditsPage({ contractors, refreshKey }) {
     try {
       const params = statusFilter ? { status: statusFilter } : {};
       const res = await getAudits(params);
-      setAudits(res.data.items || res.data);
+      setAudits(res.data?.items || res.data || []);
     } catch (err) {
       setError(err.response?.data?.detail || 'Failed to load audits');
+      setAudits([]);
     }
   };
 

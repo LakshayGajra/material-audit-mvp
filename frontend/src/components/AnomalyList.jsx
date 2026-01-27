@@ -30,9 +30,10 @@ export default function AnomalyList() {
     try {
       const resolved = filter === 'all' ? undefined : filter === 'resolved';
       const res = await getAnomalies(resolved);
-      setAnomalies(res.data);
+      setAnomalies(res.data || []);
     } catch (err) {
       console.error('Failed to load anomalies:', err);
+      setAnomalies([]);
     }
   };
 
