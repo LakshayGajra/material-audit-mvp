@@ -53,6 +53,7 @@ import {
   getWarehouses,
   createGoodsReceipt,
   getPOGoodsReceipts,
+  getErrorMessage,
 } from '../api';
 import { DataTable, ConfirmDialog } from './common';
 
@@ -108,7 +109,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
       const res = await getPurchaseOrders(params);
       setOrders(res.data?.items || res.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load purchase orders');
+      setError(getErrorMessage(err, 'Failed to load purchase orders'));
       setOrders([]);
     }
   };
@@ -138,14 +139,13 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
       const data = {
         supplier_id: parseInt(newPO.supplier_id),
         warehouse_id: parseInt(newPO.warehouse_id),
-        expected_delivery: newPO.expected_delivery || null,
+        expected_delivery_date: newPO.expected_delivery || null,
         notes: newPO.notes || null,
-        created_by: 'System',
         lines: newPO.lines.map((line) => ({
           material_id: parseInt(line.material_id),
-          quantity: parseFloat(line.quantity),
+          quantity_ordered: parseFloat(line.quantity),
           unit_price: parseFloat(line.unit_price),
-          unit_of_measure: materials.find((m) => m.id === parseInt(line.material_id))?.unit || 'pcs',
+          unit_of_measure: (materials || []).find((m) => m.id === parseInt(line.material_id))?.unit || 'pcs',
         })),
       };
       await createPurchaseOrder(data);
@@ -154,7 +154,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
       setNewPO({ supplier_id: '', warehouse_id: '', expected_delivery: '', notes: '', lines: [] });
       loadOrders();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create purchase order');
+      setError(getErrorMessage(err, 'Failed to create purchase order'));
     }
   };
 
@@ -185,7 +185,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
       setPOGRNs(grnRes.data || []);
       setViewDialog(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load purchase order');
+      setError(getErrorMessage(err, 'Failed to load purchase order'));
     }
   };
 
@@ -198,7 +198,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
         handleViewPO(poId);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to submit purchase order');
+      setError(getErrorMessage(err, 'Failed to submit purchase order'));
     }
   };
 
@@ -211,7 +211,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
         handleViewPO(poId);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to approve purchase order');
+      setError(getErrorMessage(err, 'Failed to approve purchase order'));
     }
   };
 
@@ -233,7 +233,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
         setSelectedPO(null);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to cancel purchase order');
+      setError(getErrorMessage(err, 'Failed to cancel purchase order'));
     }
   };
 
@@ -281,7 +281,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
       handleViewPO(selectedPO.id);
       loadOrders();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create goods receipt');
+      setError(getErrorMessage(err, 'Failed to create goods receipt'));
     }
   };
 
@@ -293,7 +293,7 @@ export default function PurchaseOrdersPage({ materials, refreshKey }) {
       setNewSupplier({ name: '', code: '', contact_email: '', contact_phone: '' });
       loadSuppliers();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create supplier');
+      setError(getErrorMessage(err, 'Failed to create supplier'));
     }
   };
 

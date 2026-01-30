@@ -4,6 +4,27 @@ const api = axios.create({
   baseURL: '/api',
 });
 
+// Helper to extract error message from API responses
+// Handles FastAPI validation errors (array of objects) and string errors
+export const getErrorMessage = (err, fallback = 'An error occurred') => {
+  const detail = err.response?.data?.detail;
+  if (Array.isArray(detail)) {
+    return detail.map((e) => {
+      // FastAPI validation errors have loc (location) array showing which field
+      const fieldName = e.loc?.length > 1 ? e.loc[e.loc.length - 1] : null;
+      const message = e.msg || e.message || 'Validation error';
+      return fieldName ? `${fieldName}: ${message}` : message;
+    }).join(', ');
+  }
+  if (typeof detail === 'string') {
+    return detail;
+  }
+  if (err.message) {
+    return err.message;
+  }
+  return fallback;
+};
+
 // Contractors
 export const getContractors = () => api.get('/contractors');
 export const createContractor = (data) => api.post('/contractors', data);
@@ -129,5 +150,19 @@ export const getContractorAuditHistoryReport = (contractorId) =>
   api.get(`/v1/reports/contractor-audit-history/${contractorId}`, { responseType: 'blob' });
 export const getAnomalyReport = (params) =>
   api.get('/v1/reports/anomaly-report', { params, responseType: 'blob' });
+
+// Finished Goods Receipts
+export const getFGRs = (params) => api.get('/v1/fgr', { params });
+export const createFGR = (data) => api.post('/v1/fgr', data);
+export const getFGR = (id) => api.get(`/v1/fgr/${id}`);
+export const submitFGR = (id) => api.post(`/v1/fgr/${id}/submit`);
+export const inspectFGR = (id, data) => api.put(`/v1/fgr/${id}/inspect`, data);
+export const completeFGR = (id) => api.post(`/v1/fgr/${id}/complete`);
+export const getContractorPendingDeliveries = (contractorId) =>
+  api.get(`/v1/fgr/pending-deliveries/${contractorId}`);
+
+// Finished Goods Inventory
+export const getFinishedGoodsInventory = (params) =>
+  api.get('/v1/finished-goods-inventory', { params });
 
 export default api;

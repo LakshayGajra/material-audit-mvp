@@ -23,7 +23,7 @@ import {
   Add as AddIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-import { getMaterials, createMaterial } from '../api';
+import { getMaterials, createMaterial, getErrorMessage } from '../api';
 
 const COMMON_UNITS = [
   { value: 'kg', label: 'Kilograms (kg)' },
@@ -109,7 +109,7 @@ export default function MaterialsPage() {
       loadMaterials();
       setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create material');
+      setError(getErrorMessage(err, 'Failed to create material'));
     } finally {
       setLoading(false);
     }

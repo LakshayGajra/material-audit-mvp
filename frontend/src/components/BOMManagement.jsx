@@ -19,7 +19,7 @@ import {
   IconButton,
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
-import { getBOM, addBOMItem, deleteBOMItem } from '../api';
+import { getBOM, addBOMItem, deleteBOMItem, getErrorMessage } from '../api';
 
 export default function BOMManagement({ finishedGoods, materials }) {
   const [selectedFG, setSelectedFG] = useState('');
@@ -63,7 +63,7 @@ export default function BOMManagement({ finishedGoods, materials }) {
       setQuantity('');
       loadBOM();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to add BOM item');
+      setError(getErrorMessage(err, 'Failed to add BOM item'));
     }
   };
 
@@ -72,7 +72,7 @@ export default function BOMManagement({ finishedGoods, materials }) {
       await deleteBOMItem(bomId);
       loadBOM();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to delete BOM item');
+      setError(getErrorMessage(err, 'Failed to delete BOM item'));
     }
   };
 

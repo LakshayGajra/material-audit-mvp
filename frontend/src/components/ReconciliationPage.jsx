@@ -45,6 +45,7 @@ import {
   getPendingReconciliations,
   getContractorReconciliations,
   getContractorInventory,
+  getErrorMessage,
 } from '../api';
 
 const STATUS_COLORS = {
@@ -97,7 +98,7 @@ export default function ReconciliationPage({ contractors, materials, refreshKey 
       const res = await getContractorReconciliations(selectedContractor);
       setReconciliations(res.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load reconciliations');
+      setError(getErrorMessage(err, 'Failed to load reconciliations'));
       setReconciliations([]);
     }
   };
@@ -128,7 +129,7 @@ export default function ReconciliationPage({ contractors, materials, refreshKey 
       const res = await getReconciliations({});
       setReconciliations(res.data?.items || res.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load reconciliations');
+      setError(getErrorMessage(err, 'Failed to load reconciliations'));
       setReconciliations([]);
     }
   };
@@ -180,7 +181,7 @@ export default function ReconciliationPage({ contractors, materials, refreshKey 
       setSubmitDialog(false);
       loadContractorReconciliations();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to submit reconciliation');
+      setError(getErrorMessage(err, 'Failed to submit reconciliation'));
     }
   };
 
@@ -191,7 +192,7 @@ export default function ReconciliationPage({ contractors, materials, refreshKey 
       setSelectedRecon(res.data);
       setViewDialog(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load reconciliation');
+      setError(getErrorMessage(err, 'Failed to load reconciliation'));
     }
   };
 
@@ -210,7 +211,7 @@ export default function ReconciliationPage({ contractors, materials, refreshKey 
       loadPendingReconciliations();
       loadAllReconciliations();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to review reconciliation');
+      setError(getErrorMessage(err, 'Failed to review reconciliation'));
     }
   };
 

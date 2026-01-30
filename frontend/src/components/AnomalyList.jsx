@@ -13,7 +13,7 @@ import {
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
-import { getAnomalies, resolveAnomaly } from '../api';
+import { getAnomalies, resolveAnomaly, getErrorMessage } from '../api';
 import { DataTable } from './common';
 
 export default function AnomalyList() {
@@ -44,7 +44,7 @@ export default function AnomalyList() {
       setSuccess('Anomaly resolved successfully');
       loadAnomalies();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to resolve anomaly');
+      setError(getErrorMessage(err, 'Failed to resolve anomaly'));
     }
   };
 

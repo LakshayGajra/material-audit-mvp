@@ -22,6 +22,11 @@ from app.models.audit_line_item import AuditLineItem
 from app.models.inventory_adjustment import InventoryAdjustment
 from app.models.reconciliation import Reconciliation
 from app.models.reconciliation_line import ReconciliationLine
+from app.models.finished_goods_receipt import (
+    FinishedGoodsInventory,
+    FinishedGoodsReceipt,
+    FinishedGoodsReceiptLine,
+)
 
 __all__ = [
     "Material",
@@ -48,4 +53,7 @@ __all__ = [
     "InventoryAdjustment",
     "Reconciliation",
     "ReconciliationLine",
+    "FinishedGoodsInventory",
+    "FinishedGoodsReceipt",
+    "FinishedGoodsReceiptLine",
 ]

@@ -18,7 +18,7 @@ import {
   TableRow,
   Collapse,
 } from '@mui/material';
-import { reportProduction } from '../api';
+import { reportProduction, getErrorMessage } from '../api';
 
 export default function ReportProductionForm({ contractors, finishedGoods, onSuccess }) {
   const [contractorId, setContractorId] = useState('');
@@ -47,7 +47,7 @@ export default function ReportProductionForm({ contractors, finishedGoods, onSuc
       setProductionDate('');
       onSuccess?.();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to report production');
+      setError(getErrorMessage(err, 'Failed to report production'));
     }
   };
 

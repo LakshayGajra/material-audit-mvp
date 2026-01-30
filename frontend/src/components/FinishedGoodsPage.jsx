@@ -13,7 +13,7 @@ import {
   TableHead,
   TableRow,
 } from '@mui/material';
-import { getFinishedGoods, createFinishedGood } from '../api';
+import { getFinishedGoods, createFinishedGood, getErrorMessage } from '../api';
 
 export default function FinishedGoodsPage() {
   const [finishedGoods, setFinishedGoods] = useState([]);
@@ -48,7 +48,7 @@ export default function FinishedGoodsPage() {
       setName('');
       loadFinishedGoods();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create finished good');
+      setError(getErrorMessage(err, 'Failed to create finished good'));
     }
   };
 

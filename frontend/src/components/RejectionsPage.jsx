@@ -41,6 +41,7 @@ import {
   disputeRejection,
   receiveRejection,
   getWarehouses,
+  getErrorMessage,
 } from '../api';
 
 const STATUS_COLORS = {
@@ -75,12 +76,13 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
   });
 
   // Action form states
-  const [approvalNotes, setApprovalNotes] = useState('');
+  const [approvalData, setApprovalData] = useState({
+    return_warehouse_id: '',
+    notes: '',
+  });
   const [disputeReason, setDisputeReason] = useState('');
   const [receiveData, setReceiveData] = useState({
-    warehouse_id: '',
     received_by: '',
-    quantity_received: '',
     notes: '',
   });
 
@@ -97,7 +99,7 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
       const res = await getRejections(params);
       setRejections(res.data?.items || res.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load rejections');
+      setError(getErrorMessage(err, 'Failed to load rejections'));
       setRejections([]);
     }
   };
@@ -114,12 +116,13 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
 
   const handleCreateRejection = async () => {
     try {
-      const mat = materials.find((m) => m.id === parseInt(newRejection.material_id));
+      const mat = (materials || []).find((m) => m.id === parseInt(newRejection.material_id));
       await createRejection({
         contractor_id: parseInt(newRejection.contractor_id),
         material_id: parseInt(newRejection.material_id),
-        quantity: parseFloat(newRejection.quantity),
+        quantity_rejected: parseFloat(newRejection.quantity),
         unit_of_measure: mat?.unit || 'pcs',
+        rejection_date: new Date().toISOString().split('T')[0],
         rejection_reason: newRejection.rejection_reason,
         notes: newRejection.notes || null,
         reported_by: 'Contractor',
@@ -135,7 +138,7 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
       });
       loadRejections();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to report rejection');
+      setError(getErrorMessage(err, 'Failed to report rejection'));
     }
   };
 
@@ -145,7 +148,7 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
       setSelectedRejection(res.data);
       setViewDialog(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load rejection');
+      setError(getErrorMessage(err, 'Failed to load rejection'));
     }
   };
 
@@ -153,14 +156,15 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
     try {
       await approveRejection(selectedRejection.id, {
         approved_by: 'Manager',
-        notes: approvalNotes || null,
+        return_warehouse_id: parseInt(approvalData.return_warehouse_id),
+        notes: approvalData.notes || null,
       });
       setSuccess('Rejection approved');
-      setApprovalNotes('');
+      setApprovalData({ return_warehouse_id: '', notes: '' });
       handleViewRejection(selectedRejection.id);
       loadRejections();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to approve rejection');
+      setError(getErrorMessage(err, 'Failed to approve rejection'));
     }
   };
 
@@ -168,31 +172,29 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
     try {
       await disputeRejection(selectedRejection.id, {
         disputed_by: 'Manager',
-        dispute_reason: disputeReason,
+        reason: disputeReason,
       });
       setSuccess('Rejection disputed');
       setDisputeReason('');
       handleViewRejection(selectedRejection.id);
       loadRejections();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to dispute rejection');
+      setError(getErrorMessage(err, 'Failed to dispute rejection'));
     }
   };
 
   const handleReceive = async () => {
     try {
       await receiveRejection(selectedRejection.id, {
-        warehouse_id: parseInt(receiveData.warehouse_id),
         received_by: receiveData.received_by || 'Warehouse',
-        quantity_received: parseFloat(receiveData.quantity_received),
         notes: receiveData.notes || null,
       });
       setSuccess('Material received at warehouse');
-      setReceiveData({ warehouse_id: '', received_by: '', quantity_received: '', notes: '' });
+      setReceiveData({ received_by: '', notes: '' });
       handleViewRejection(selectedRejection.id);
       loadRejections();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to receive material');
+      setError(getErrorMessage(err, 'Failed to receive material'));
     }
   };
 
@@ -453,10 +455,23 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
                   <Typography variant="subtitle2" gutterBottom>Manager Actions</Typography>
                   <Box sx={{ display: 'flex', gap: 2, flexDirection: 'column' }}>
                     <Box>
+                      <FormControl fullWidth required sx={{ mb: 1 }}>
+                        <InputLabel>Return Warehouse</InputLabel>
+                        <Select
+                          value={approvalData.return_warehouse_id}
+                          label="Return Warehouse"
+                          onChange={(e) => setApprovalData({ ...approvalData, return_warehouse_id: e.target.value })}
+                          size="small"
+                        >
+                          {warehouses.map((w) => (
+                            <MenuItem key={w.id} value={w.id}>{w.code} - {w.name}</MenuItem>
+                          ))}
+                        </Select>
+                      </FormControl>
                       <TextField
                         label="Approval Notes (optional)"
-                        value={approvalNotes}
-                        onChange={(e) => setApprovalNotes(e.target.value)}
+                        value={approvalData.notes}
+                        onChange={(e) => setApprovalData({ ...approvalData, notes: e.target.value })}
                         size="small"
                         fullWidth
                         sx={{ mb: 1 }}
@@ -466,13 +481,14 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
                         color="success"
                         startIcon={<CheckIcon />}
                         onClick={handleApprove}
+                        disabled={!approvalData.return_warehouse_id}
                       >
                         Approve Rejection
                       </Button>
                     </Box>
                     <Box>
                       <TextField
-                        label="Dispute Reason"
+                        label="Dispute Reason (min 10 chars)"
                         value={disputeReason}
                         onChange={(e) => setDisputeReason(e.target.value)}
                         size="small"
@@ -485,7 +501,7 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
                         color="error"
                         startIcon={<CloseIcon />}
                         onClick={handleDispute}
-                        disabled={!disputeReason}
+                        disabled={!disputeReason || disputeReason.length < 10}
                       >
                         Dispute Rejection
                       </Button>
@@ -497,38 +513,17 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
               {(selectedRejection.status === 'APPROVED' || selectedRejection.status === 'IN_TRANSIT') && (
                 <Box sx={{ mt: 3, p: 2, bgcolor: 'grey.50', borderRadius: 1 }}>
                   <Typography variant="subtitle2" gutterBottom>Receive at Warehouse</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Return warehouse: {selectedRejection.return_warehouse_name || 'Not specified'}
+                  </Typography>
                   <Grid container spacing={2}>
-                    <Grid size={6}>
-                      <FormControl fullWidth required>
-                        <InputLabel>Warehouse</InputLabel>
-                        <Select
-                          value={receiveData.warehouse_id}
-                          label="Warehouse"
-                          onChange={(e) => setReceiveData({ ...receiveData, warehouse_id: e.target.value })}
-                        >
-                          {warehouses.map((w) => (
-                            <MenuItem key={w.id} value={w.id}>{w.name}</MenuItem>
-                          ))}
-                        </Select>
-                      </FormControl>
-                    </Grid>
-                    <Grid size={6}>
-                      <TextField
-                        label="Quantity Received"
-                        type="number"
-                        value={receiveData.quantity_received}
-                        onChange={(e) => setReceiveData({ ...receiveData, quantity_received: e.target.value })}
-                        fullWidth
-                        required
-                        inputProps={{ max: selectedRejection.quantity }}
-                      />
-                    </Grid>
                     <Grid size={6}>
                       <TextField
                         label="Received By"
                         value={receiveData.received_by}
                         onChange={(e) => setReceiveData({ ...receiveData, received_by: e.target.value })}
                         fullWidth
+                        placeholder="Your name"
                       />
                     </Grid>
                     <Grid size={6}>
@@ -544,7 +539,6 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
                         variant="contained"
                         startIcon={<ReceiveIcon />}
                         onClick={handleReceive}
-                        disabled={!receiveData.warehouse_id || !receiveData.quantity_received}
                       >
                         Record Receipt
                       </Button>

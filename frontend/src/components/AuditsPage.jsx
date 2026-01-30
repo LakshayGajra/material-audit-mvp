@@ -47,6 +47,7 @@ import {
   keepSystemValues,
   closeAudit,
   getAudits,
+  getErrorMessage,
 } from '../api';
 
 const STATUS_COLORS = {
@@ -93,7 +94,7 @@ export default function AuditsPage({ contractors, refreshKey }) {
       const res = await getAudits(params);
       setAudits(res.data?.items || res.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load audits');
+      setError(getErrorMessage(err, 'Failed to load audits'));
       setAudits([]);
     }
   };
@@ -114,7 +115,7 @@ export default function AuditsPage({ contractors, refreshKey }) {
       // Load the audit for counting
       await loadAuditForCounting(res.data.id);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to start audit');
+      setError(getErrorMessage(err, 'Failed to start audit'));
     }
   };
 
@@ -122,44 +123,42 @@ export default function AuditsPage({ contractors, refreshKey }) {
     try {
       const res = await getAuditForAuditor(auditId);
       setCurrentAudit(res.data);
-      // Initialize counts
+      // Initialize counts using line_item_id as key
       const initialCounts = {};
       res.data.materials.forEach((mat) => {
-        initialCounts[mat.material_id] = '';
+        initialCounts[mat.id] = ''; // mat.id is the line_item_id
       });
       setAuditCounts(initialCounts);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load audit');
+      setError(getErrorMessage(err, 'Failed to load audit'));
     }
   };
 
   const handleSaveCounts = async () => {
     try {
+      // Backend expects array of { line_item_id, physical_count, auditor_notes }
       const counts = Object.entries(auditCounts)
         .filter(([_, qty]) => qty !== '')
-        .map(([materialId, qty]) => ({
-          material_id: parseInt(materialId),
-          physical_quantity: parseFloat(qty),
+        .map(([lineItemId, qty]) => ({
+          line_item_id: parseInt(lineItemId),
+          physical_count: parseFloat(qty),
         }));
 
-      await enterAuditCounts(currentAudit.audit_id, {
-        counts,
-        counted_by: currentAudit.auditor_name,
-      });
+      await enterAuditCounts(currentAudit.id, counts);
       setSuccess('Counts saved');
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to save counts');
+      setError(getErrorMessage(err, 'Failed to save counts'));
     }
   };
 
   const handleSubmitAudit = async () => {
     try {
-      await submitAudit(currentAudit.audit_id);
+      await submitAudit(currentAudit.id);
       setSuccess('Audit submitted for review');
       setCurrentAudit(null);
       setAuditCounts({});
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to submit audit');
+      setError(getErrorMessage(err, 'Failed to submit audit'));
     }
   };
 
@@ -171,48 +170,48 @@ export default function AuditsPage({ contractors, refreshKey }) {
       setSelectedAnalysis(res.data);
       setAnalysisDialog(true);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to analyze audit');
+      setError(getErrorMessage(err, 'Failed to analyze audit'));
     }
   };
 
   const handleAcceptCounts = async (lineItemId) => {
     try {
-      await acceptAuditCounts(selectedAnalysis.audit_id, {
+      await acceptAuditCounts(selectedAnalysis.id, {
         line_item_ids: [lineItemId],
         approved_by: 'Manager',
       });
       setSuccess('Count accepted, inventory adjusted');
-      handleAnalyzeAudit(selectedAnalysis.audit_id);
+      handleAnalyzeAudit(selectedAnalysis.id);
       loadAudits();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to accept counts');
+      setError(getErrorMessage(err, 'Failed to accept counts'));
     }
   };
 
   const handleKeepSystem = async (lineItemId) => {
     try {
-      await keepSystemValues(selectedAnalysis.audit_id, {
+      await keepSystemValues(selectedAnalysis.id, {
         line_item_ids: [lineItemId],
         approved_by: 'Manager',
         reason: 'Keeping system values',
       });
       setSuccess('System values kept');
-      handleAnalyzeAudit(selectedAnalysis.audit_id);
+      handleAnalyzeAudit(selectedAnalysis.id);
       loadAudits();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to keep system values');
+      setError(getErrorMessage(err, 'Failed to keep system values'));
     }
   };
 
   const handleCloseAudit = async () => {
     try {
-      await closeAudit(selectedAnalysis.audit_id, { closed_by: 'Manager' });
+      await closeAudit(selectedAnalysis.id, { closed_by: 'Manager' });
       setSuccess('Audit closed');
       setAnalysisDialog(false);
       setSelectedAnalysis(null);
       loadAudits();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to close audit');
+      setError(getErrorMessage(err, 'Failed to close audit'));
     }
   };
 
@@ -290,7 +289,7 @@ export default function AuditsPage({ contractors, refreshKey }) {
                     </TableHead>
                     <TableBody>
                       {currentAudit.materials.map((mat) => (
-                        <TableRow key={mat.material_id}>
+                        <TableRow key={mat.id}>
                           <TableCell>{mat.material_code}</TableCell>
                           <TableCell>{mat.material_name}</TableCell>
                           <TableCell>{mat.unit_of_measure}</TableCell>
@@ -298,11 +297,11 @@ export default function AuditsPage({ contractors, refreshKey }) {
                             <TextField
                               type="number"
                               size="small"
-                              value={auditCounts[mat.material_id] || ''}
+                              value={auditCounts[mat.id] || ''}
                               onChange={(e) =>
                                 setAuditCounts({
                                   ...auditCounts,
-                                  [mat.material_id]: e.target.value,
+                                  [mat.id]: e.target.value,
                                 })
                               }
                               inputProps={{ min: 0, step: 0.01 }}

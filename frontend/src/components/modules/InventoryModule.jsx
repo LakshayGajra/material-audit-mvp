@@ -6,6 +6,8 @@ import ContractorList from '../ContractorList';
 import WarehousePage from '../WarehousePage';
 import PurchaseOrdersPage from '../PurchaseOrdersPage';
 import RejectionsPage from '../RejectionsPage';
+import FinishedGoodsReceiptPage from '../FinishedGoodsReceiptPage';
+import FinishedGoodsInventoryPage from '../FinishedGoodsInventoryPage';
 
 export default function InventoryModule({
   contractors,
@@ -33,7 +35,8 @@ export default function InventoryModule({
         <Tabs
           value={subTab}
           onChange={(e, v) => setSubTab(v)}
-          variant="standard"
+          variant="scrollable"
+          scrollButtons="auto"
           sx={{
             minHeight: 40,
             '& .MuiTab-root': {
@@ -47,6 +50,8 @@ export default function InventoryModule({
           <Tab label="Warehouses" />
           <Tab label="Purchase Orders" />
           <Tab label="Rejections" />
+          <Tab label="Finished Goods Receipt" />
+          <Tab label="FG Inventory" />
         </Tabs>
       </Box>
 
@@ -91,6 +96,20 @@ export default function InventoryModule({
         <RejectionsPage
           contractors={contractors}
           materials={materials}
+          refreshKey={refreshKey}
+        />
+      )}
+
+      {/* Sub-tab 4: Finished Goods Receipt */}
+      {subTab === 4 && (
+        <FinishedGoodsReceiptPage
+          refreshKey={refreshKey}
+        />
+      )}
+
+      {/* Sub-tab 5: FG Inventory */}
+      {subTab === 5 && (
+        <FinishedGoodsInventoryPage
           refreshKey={refreshKey}
         />
       )}

@@ -12,6 +12,8 @@ import ContractorList from './components/ContractorList';
 import WarehousePage from './components/WarehousePage';
 import PurchaseOrdersPage from './components/PurchaseOrdersPage';
 import RejectionsPage from './components/RejectionsPage';
+import FinishedGoodsReceiptPage from './components/FinishedGoodsReceiptPage';
+import FinishedGoodsInventoryPage from './components/FinishedGoodsInventoryPage';
 import AuditsPage from './components/AuditsPage';
 import ReconciliationPage from './components/ReconciliationPage';
 import AnomalyList from './components/AnomalyList';
@@ -136,6 +138,18 @@ function App() {
             <RejectionsPage
               contractors={contractors}
               materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
+        case 'fgr':
+          return (
+            <FinishedGoodsReceiptPage
+              refreshKey={refreshKey}
+            />
+          );
+        case 'fginventory':
+          return (
+            <FinishedGoodsInventoryPage
               refreshKey={refreshKey}
             />
           );

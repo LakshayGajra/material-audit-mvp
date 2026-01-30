@@ -22,7 +22,7 @@ import {
   Add as AddIcon,
   Close as CloseIcon,
 } from '@mui/icons-material';
-import { createContractor } from '../api';
+import { createContractor, getErrorMessage } from '../api';
 
 export default function ContractorList({ contractors, onContractorCreated }) {
   const [open, setOpen] = useState(false);
@@ -72,7 +72,7 @@ export default function ContractorList({ contractors, onContractorCreated }) {
       handleClose();
       onContractorCreated?.();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create contractor');
+      setError(getErrorMessage(err, 'Failed to create contractor'));
     } finally {
       setLoading(false);
     }

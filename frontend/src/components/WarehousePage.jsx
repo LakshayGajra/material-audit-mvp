@@ -32,6 +32,7 @@ import {
   getLowStockItems,
   addWarehouseInventory,
   updateWarehouseInventory,
+  getErrorMessage,
 } from '../api';
 import { DataTable } from './common';
 
@@ -78,7 +79,7 @@ export default function WarehousePage({ materials, refreshKey }) {
         setSelectedWarehouse(data[0].id);
       }
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load warehouses');
+      setError(getErrorMessage(err, 'Failed to load warehouses'));
       setWarehouses([]);
     }
   };
@@ -89,7 +90,7 @@ export default function WarehousePage({ materials, refreshKey }) {
       const res = await getWarehouseInventory(warehouseId);
       setInventory(res.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load inventory');
+      setError(getErrorMessage(err, 'Failed to load inventory'));
       setInventory([]);
     } finally {
       setLoading(false);
@@ -114,7 +115,7 @@ export default function WarehousePage({ materials, refreshKey }) {
       setNewWarehouse({ name: '', code: '', location: '' });
       loadWarehouses();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create warehouse');
+      setError(getErrorMessage(err, 'Failed to create warehouse'));
     }
   };
 
@@ -140,7 +141,7 @@ export default function WarehousePage({ materials, refreshKey }) {
       loadWarehouseInventory(selectedWarehouse);
       loadLowStockItems(selectedWarehouse);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to add inventory');
+      setError(getErrorMessage(err, 'Failed to add inventory'));
     }
   };
 

@@ -34,6 +34,7 @@ import {
   createThreshold,
   updateThreshold,
   deleteThreshold,
+  getErrorMessage,
 } from '../api';
 
 export default function ThresholdsPage({ contractors, materials, refreshKey }) {
@@ -68,7 +69,7 @@ export default function ThresholdsPage({ contractors, materials, refreshKey }) {
       const res = await getThresholds(params);
       setThresholds(res.data?.items || res.data || []);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load thresholds');
+      setError(getErrorMessage(err, 'Failed to load thresholds'));
       setThresholds([]);
     }
   };
@@ -87,7 +88,7 @@ export default function ThresholdsPage({ contractors, materials, refreshKey }) {
       setNewThreshold({ material_id: '', contractor_id: '', threshold_percentage: '', notes: '' });
       loadThresholds();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to create threshold');
+      setError(getErrorMessage(err, 'Failed to create threshold'));
     }
   };
 
@@ -103,7 +104,7 @@ export default function ThresholdsPage({ contractors, materials, refreshKey }) {
       setSelectedThreshold(null);
       loadThresholds();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to update threshold');
+      setError(getErrorMessage(err, 'Failed to update threshold'));
     }
   };
 
@@ -114,7 +115,7 @@ export default function ThresholdsPage({ contractors, materials, refreshKey }) {
       setSuccess('Threshold deleted successfully');
       loadThresholds();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to delete threshold');
+      setError(getErrorMessage(err, 'Failed to delete threshold'));
     }
   };
 

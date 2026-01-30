@@ -21,6 +21,8 @@ import {
   Warehouse as WarehouseIcon,
   Receipt as POIcon,
   RemoveCircle as RejectIcon,
+  CheckCircle as FGRIcon,
+  Inventory2 as FGInventoryIcon,
   FactCheck as AuditIcon,
   Sync as ReconcileIcon,
   Warning as AnomalyIcon,
@@ -47,6 +49,8 @@ const navigationConfig = [
       { id: 'warehouses', label: 'Warehouses', icon: WarehouseIcon },
       { id: 'pos', label: 'Purchase Orders', icon: POIcon },
       { id: 'rejections', label: 'Rejections', icon: RejectIcon },
+      { id: 'fgr', label: 'FG Receipts', icon: FGRIcon },
+      { id: 'fginventory', label: 'FG Inventory', icon: FGInventoryIcon },
     ],
   },
   {

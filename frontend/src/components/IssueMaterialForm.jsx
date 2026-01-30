@@ -15,7 +15,7 @@ import {
   InputAdornment,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
-import { createIssuance, getWarehouses, getWarehouseInventory } from '../api';
+import { createIssuance, getWarehouses, getWarehouseInventory, getErrorMessage } from '../api';
 import { CollapsibleSection } from './common';
 
 export default function IssueMaterialForm({ contractors, materials, onSuccess }) {
@@ -143,11 +143,13 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
 
     setSubmitting(true);
     try {
+      const material = (materials || []).find((m) => m.id === parseInt(materialId));
       await createIssuance({
         warehouse_id: parseInt(warehouseId),
         contractor_id: parseInt(contractorId),
         material_id: parseInt(materialId),
         quantity: parseFloat(quantity),
+        unit_of_measure: material?.unit || 'pcs',
         issued_date: new Date().toISOString().split('T')[0],
         issued_by: issuedBy || 'System',
         notes: notes || null,
@@ -163,7 +165,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
       setTouched({});
       onSuccess?.();
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to issue material');
+      setError(getErrorMessage(err, 'Failed to issue material'));
     } finally {
       setSubmitting(false);
     }

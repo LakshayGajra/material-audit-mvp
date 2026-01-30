@@ -43,7 +43,7 @@ import {
   Pie,
   Cell,
 } from 'recharts';
-import { getDashboardSummary, getAnomalies } from '../api';
+import { getDashboardSummary, getAnomalies, getErrorMessage } from '../api';
 
 const SEVERITY_COLORS = {
   CRITICAL: '#d32f2f',
@@ -75,7 +75,7 @@ export default function DashboardPage({ onNavigate }) {
       const res = await getDashboardSummary();
       setSummary(res.data);
     } catch (err) {
-      setError(err.response?.data?.detail || 'Failed to load dashboard');
+      setError(getErrorMessage(err, 'Failed to load dashboard'));
     } finally {
       setLoading(false);
     }
