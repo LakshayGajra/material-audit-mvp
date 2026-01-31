@@ -165,4 +165,13 @@ export const getContractorPendingDeliveries = (contractorId) =>
 export const getFinishedGoodsInventory = (params) =>
   api.get('/v1/finished-goods-inventory', { params });
 
+// Inventory Checks (Unified Audits & Reconciliations)
+export const getInventoryChecks = (params) => api.get('/v1/inventory-checks', { params });
+export const createInventoryCheck = (data) => api.post('/v1/inventory-checks', data);
+export const getInventoryCheck = (id) => api.get(`/v1/inventory-checks/${id}`);
+export const getCountingView = (id) => api.get(`/v1/inventory-checks/${id}/counting-view`);
+export const enterCounts = (id, data) => api.put(`/v1/inventory-checks/${id}/counts`, data);
+export const saveCountsDraft = (id, data) => api.post(`/v1/inventory-checks/${id}/save-counts`, data);
+export const resolveInventoryCheck = (id, data) => api.put(`/v1/inventory-checks/${id}/resolve`, data);
+
 export default api;

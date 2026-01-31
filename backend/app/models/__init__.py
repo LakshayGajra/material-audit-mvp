@@ -27,6 +27,10 @@ from app.models.finished_goods_receipt import (
     FinishedGoodsReceipt,
     FinishedGoodsReceiptLine,
 )
+from app.models.inventory_check import (
+    InventoryCheck,
+    InventoryCheckLine,
+)
 
 __all__ = [
     "Material",
@@ -56,4 +60,6 @@ __all__ = [
     "FinishedGoodsInventory",
     "FinishedGoodsReceipt",
     "FinishedGoodsReceiptLine",
+    "InventoryCheck",
+    "InventoryCheckLine",
 ]

@@ -24,7 +24,6 @@ import {
   CheckCircle as FGRIcon,
   Inventory2 as FGInventoryIcon,
   FactCheck as AuditIcon,
-  Sync as ReconcileIcon,
   Warning as AnomalyIcon,
   Category as ProductIcon,
   Tune as ThresholdIcon,
@@ -58,8 +57,7 @@ const navigationConfig = [
     label: 'Audits',
     icon: AssignmentIcon,
     children: [
-      { id: 'audits', label: 'Audits', icon: AuditIcon },
-      { id: 'reconciliation', label: 'Reconciliation', icon: ReconcileIcon },
+      { id: 'inventory-checks', label: 'Inventory Checks', icon: AuditIcon },
       { id: 'anomalies', label: 'Anomalies', icon: AnomalyIcon },
     ],
   },

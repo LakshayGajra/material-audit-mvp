@@ -14,8 +14,7 @@ import PurchaseOrdersPage from './components/PurchaseOrdersPage';
 import RejectionsPage from './components/RejectionsPage';
 import FinishedGoodsReceiptPage from './components/FinishedGoodsReceiptPage';
 import FinishedGoodsInventoryPage from './components/FinishedGoodsInventoryPage';
-import AuditsPage from './components/AuditsPage';
-import ReconciliationPage from './components/ReconciliationPage';
+import InventoryCheckPage from './components/InventoryCheckPage';
 import AnomalyList from './components/AnomalyList';
 import FinishedGoodsPage from './components/FinishedGoodsPage';
 import BOMManagement from './components/BOMManagement';
@@ -159,19 +158,10 @@ function App() {
     // Audits module
     if (activeModule === 'audits') {
       switch (activeSubPage) {
-        case 'audits':
+        case 'inventory-checks':
         default:
           return (
-            <AuditsPage
-              contractors={contractors}
-              refreshKey={refreshKey}
-            />
-          );
-        case 'reconciliation':
-          return (
-            <ReconciliationPage
-              contractors={contractors}
-              materials={materials}
+            <InventoryCheckPage
               refreshKey={refreshKey}
             />
           );
