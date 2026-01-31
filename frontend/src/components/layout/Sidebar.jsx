@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import {
   Box,
   Drawer,
@@ -9,6 +9,10 @@ import {
   Collapse,
   Typography,
   Divider,
+  FormControl,
+  Select,
+  MenuItem,
+  Chip,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
@@ -29,33 +33,99 @@ import {
   Tune as ThresholdIcon,
   School as LearnIcon,
   Build as MaterialIcon,
+  People as ContractorIcon,
+  Store as SupplierIcon,
+  ShoppingCart as ProcurementIcon,
+  Engineering as OpsIcon,
+  VerifiedUser as VerifyIcon,
+  AdminPanelSettings as AdminIcon,
+  Visibility as ViewIcon,
 } from '@mui/icons-material';
 
-const SIDEBAR_WIDTH = 240;
+const SIDEBAR_WIDTH = 260;
 
-const navigationConfig = [
+// View modes for testing different user perspectives
+const VIEW_MODES = {
+  all: {
+    label: 'All Views',
+    description: 'Full access to all features',
+    color: 'default',
+  },
+  warehouse: {
+    label: 'Warehouse',
+    description: 'Warehouse & procurement operations',
+    color: 'info',
+  },
+  contractor: {
+    label: 'Contractor Ops',
+    description: 'Contractor material management',
+    color: 'success',
+  },
+  auditor: {
+    label: 'Auditor',
+    description: 'Inventory verification',
+    color: 'warning',
+  },
+  admin: {
+    label: 'Admin',
+    description: 'System configuration',
+    color: 'error',
+  },
+};
+
+// Full navigation configuration with view mode visibility
+const fullNavigationConfig = [
   {
     id: 'dashboard',
     label: 'Dashboard',
     icon: DashboardIcon,
+    views: ['all', 'warehouse', 'contractor', 'auditor', 'admin'],
   },
   {
-    id: 'inventory',
-    label: 'Inventory',
-    icon: InventoryIcon,
+    id: 'procurement',
+    label: 'Procurement',
+    icon: ProcurementIcon,
+    views: ['all', 'warehouse', 'admin'],
     children: [
-      { id: 'stock', label: 'Stock & Issue', icon: StockIcon },
-      { id: 'warehouses', label: 'Warehouses', icon: WarehouseIcon },
       { id: 'pos', label: 'Purchase Orders', icon: POIcon },
-      { id: 'rejections', label: 'Rejections', icon: RejectIcon },
-      { id: 'fgr', label: 'FG Receipts', icon: FGRIcon },
-      { id: 'fginventory', label: 'FG Inventory', icon: FGInventoryIcon },
+      { id: 'suppliers', label: 'Suppliers', icon: SupplierIcon },
     ],
   },
   {
-    id: 'audits',
-    label: 'Audits',
-    icon: AssignmentIcon,
+    id: 'warehouse',
+    label: 'Warehouse',
+    icon: WarehouseIcon,
+    views: ['all', 'warehouse', 'admin'],
+    children: [
+      { id: 'warehouses', label: 'Inventory', icon: InventoryIcon },
+    ],
+  },
+  {
+    id: 'contractor',
+    label: 'Contractor Ops',
+    icon: OpsIcon,
+    views: ['all', 'contractor', 'admin'],
+    children: [
+      { id: 'stock', label: 'Issue Materials', icon: StockIcon },
+      { id: 'rejections', label: 'Rejections', icon: RejectIcon },
+      { id: 'fgr', label: 'Receive FG', icon: FGRIcon },
+    ],
+  },
+  {
+    id: 'finishedgoods',
+    label: 'Finished Goods',
+    icon: FGInventoryIcon,
+    views: ['all', 'warehouse', 'contractor', 'admin'],
+    children: [
+      { id: 'fginventory', label: 'FG Inventory', icon: InventoryIcon },
+      { id: 'products', label: 'Products & BOM', icon: ProductIcon },
+    ],
+  },
+  {
+    id: 'verification',
+    label: 'Verification',
+    icon: VerifyIcon,
+    views: ['all', 'auditor', 'admin'],
     children: [
       { id: 'inventory-checks', label: 'Inventory Checks', icon: AuditIcon },
       { id: 'anomalies', label: 'Anomalies', icon: AnomalyIcon },
@@ -65,20 +135,42 @@ const navigationConfig = [
     id: 'setup',
     label: 'Setup',
     icon: SettingsIcon,
+    views: ['all', 'admin'],
     children: [
       { id: 'materials', label: 'Materials', icon: MaterialIcon },
-      { id: 'products', label: 'Products & BOM', icon: ProductIcon },
+      { id: 'contractors', label: 'Contractors', icon: ContractorIcon },
       { id: 'thresholds', label: 'Thresholds', icon: ThresholdIcon },
     ],
   },
 ];
 
 export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
-  const [expanded, setExpanded] = useState({
-    inventory: true,
-    audits: true,
-    setup: true,
+  // Load view mode from localStorage or default to 'all'
+  const [viewMode, setViewMode] = useState(() => {
+    const saved = localStorage.getItem('viewMode');
+    return saved && VIEW_MODES[saved] ? saved : 'all';
   });
+
+  const [expanded, setExpanded] = useState(() => {
+    // Start with all sections expanded
+    const initial = {};
+    fullNavigationConfig.forEach((item) => {
+      if (item.children) {
+        initial[item.id] = true;
+      }
+    });
+    return initial;
+  });
+
+  // Save view mode to localStorage when it changes
+  useEffect(() => {
+    localStorage.setItem('viewMode', viewMode);
+  }, [viewMode]);
+
+  // Filter navigation based on current view mode
+  const navigationConfig = fullNavigationConfig.filter(
+    (item) => item.views.includes(viewMode)
+  );
 
   const handleToggle = (moduleId) => {
     setExpanded((prev) => ({
@@ -96,6 +188,14 @@ export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
       return activeModule === moduleId && activeSubPage === subPageId;
     }
     return activeModule === moduleId && !activeSubPage;
+  };
+
+  const handleViewModeChange = (event) => {
+    const newMode = event.target.value;
+    setViewMode(newMode);
+
+    // Navigate to dashboard when switching views to avoid being on a hidden page
+    onNavigate({ module: 'dashboard', subPage: null });
   };
 
   return (
@@ -116,7 +216,7 @@ export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
       {/* Logo / Brand */}
       <Box
         sx={{
-          p: 2.5,
+          p: 2,
           display: 'flex',
           alignItems: 'center',
           gap: 1.5,
@@ -137,8 +237,58 @@ export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
 
       <Divider />
 
+      {/* View Mode Selector */}
+      <Box sx={{ px: 2, py: 1.5 }}>
+        <Typography
+          variant="caption"
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 0.5,
+            color: 'text.secondary',
+            mb: 0.5,
+            fontWeight: 500,
+          }}
+        >
+          <ViewIcon sx={{ fontSize: 14 }} />
+          View Mode
+        </Typography>
+        <FormControl fullWidth size="small">
+          <Select
+            value={viewMode}
+            onChange={handleViewModeChange}
+            sx={{
+              '& .MuiSelect-select': {
+                py: 1,
+                display: 'flex',
+                alignItems: 'center',
+                gap: 1,
+              },
+            }}
+          >
+            {Object.entries(VIEW_MODES).map(([key, config]) => (
+              <MenuItem key={key} value={key}>
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
+                  <Chip
+                    label={config.label}
+                    size="small"
+                    color={config.color}
+                    sx={{ minWidth: 90 }}
+                  />
+                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
+                    {config.description}
+                  </Typography>
+                </Box>
+              </MenuItem>
+            ))}
+          </Select>
+        </FormControl>
+      </Box>
+
+      <Divider />
+
       {/* Navigation */}
-      <List component="nav" sx={{ px: 1, py: 1 }}>
+      <List component="nav" sx={{ px: 1, py: 1, flexGrow: 1, overflow: 'auto' }}>
         {navigationConfig.map((item) => {
           const Icon = item.icon;
           const hasChildren = item.children && item.children.length > 0;
@@ -243,9 +393,6 @@ export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
           );
         })}
       </List>
-
-      {/* Spacer to push Learn to bottom */}
-      <Box sx={{ flexGrow: 1 }} />
 
       {/* Learn Section at Bottom */}
       <Divider />

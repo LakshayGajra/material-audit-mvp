@@ -11,6 +11,7 @@ import ContractorInventory from './components/ContractorInventory';
 import ContractorList from './components/ContractorList';
 import WarehousePage from './components/WarehousePage';
 import PurchaseOrdersPage from './components/PurchaseOrdersPage';
+import SuppliersPage from './components/SuppliersPage';
 import RejectionsPage from './components/RejectionsPage';
 import FinishedGoodsReceiptPage from './components/FinishedGoodsReceiptPage';
 import FinishedGoodsInventoryPage from './components/FinishedGoodsInventoryPage';
@@ -20,6 +21,7 @@ import FinishedGoodsPage from './components/FinishedGoodsPage';
 import BOMManagement from './components/BOMManagement';
 import ThresholdsPage from './components/ThresholdsPage';
 import MaterialsPage from './components/MaterialsPage';
+import ContractorsPage from './components/ContractorsPage';
 import LearnPage from './components/LearnPage';
 
 function App() {
@@ -95,8 +97,38 @@ function App() {
       return <DashboardPage onNavigate={handleNavigate} />;
     }
 
-    // Inventory module
-    if (activeModule === 'inventory') {
+    // Procurement module
+    if (activeModule === 'procurement') {
+      switch (activeSubPage) {
+        case 'pos':
+        default:
+          return (
+            <PurchaseOrdersPage
+              materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
+        case 'suppliers':
+          return <SuppliersPage refreshKey={refreshKey} />;
+      }
+    }
+
+    // Warehouse module
+    if (activeModule === 'warehouse') {
+      switch (activeSubPage) {
+        case 'warehouses':
+        default:
+          return (
+            <WarehousePage
+              materials={materials}
+              refreshKey={refreshKey}
+            />
+          );
+      }
+    }
+
+    // Contractor Operations module
+    if (activeModule === 'contractor') {
       switch (activeSubPage) {
         case 'stock':
         default:
@@ -108,7 +140,6 @@ function App() {
                   materials={materials}
                   onSuccess={handleRefresh}
                 />
-                <ContractorList contractors={contractors} onContractorCreated={loadContractors} />
               </Grid>
               <Grid size={{ xs: 12, md: 8 }}>
                 <ContractorInventory
@@ -117,20 +148,6 @@ function App() {
                 />
               </Grid>
             </Grid>
-          );
-        case 'warehouses':
-          return (
-            <WarehousePage
-              materials={materials}
-              refreshKey={refreshKey}
-            />
-          );
-        case 'pos':
-          return (
-            <PurchaseOrdersPage
-              materials={materials}
-              refreshKey={refreshKey}
-            />
           );
         case 'rejections':
           return (
@@ -146,17 +163,38 @@ function App() {
               refreshKey={refreshKey}
             />
           );
+      }
+    }
+
+    // Finished Goods module
+    if (activeModule === 'finishedgoods') {
+      switch (activeSubPage) {
         case 'fginventory':
+        default:
           return (
             <FinishedGoodsInventoryPage
               refreshKey={refreshKey}
             />
           );
+        case 'products':
+          return (
+            <Grid container spacing={3}>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <FinishedGoodsPage />
+              </Grid>
+              <Grid size={{ xs: 12, md: 6 }}>
+                <BOMManagement
+                  finishedGoods={finishedGoods}
+                  materials={materials}
+                />
+              </Grid>
+            </Grid>
+          );
       }
     }
 
-    // Audits module
-    if (activeModule === 'audits') {
+    // Verification module (formerly Audits)
+    if (activeModule === 'verification') {
       switch (activeSubPage) {
         case 'inventory-checks':
         default:
@@ -176,19 +214,13 @@ function App() {
         case 'materials':
         default:
           return <MaterialsPage />;
-        case 'products':
+        case 'contractors':
           return (
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <FinishedGoodsPage />
-              </Grid>
-              <Grid size={{ xs: 12, md: 6 }}>
-                <BOMManagement
-                  finishedGoods={finishedGoods}
-                  materials={materials}
-                />
-              </Grid>
-            </Grid>
+            <ContractorsPage
+              contractors={contractors}
+              onContractorCreated={loadContractors}
+              refreshKey={refreshKey}
+            />
           );
         case 'thresholds':
           return (
