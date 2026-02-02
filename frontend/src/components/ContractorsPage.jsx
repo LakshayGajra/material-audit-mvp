@@ -21,11 +21,15 @@ import {
   Chip,
   Card,
   CardContent,
+  Tabs,
+  Tab,
 } from '@mui/material';
 import {
   Add as AddIcon,
   People as ContractorIcon,
   Inventory as InventoryIcon,
+  Category as MaterialIcon,
+  CheckCircle as FinishedGoodIcon,
 } from '@mui/icons-material';
 import { getContractors, createContractor, getContractorInventory, getErrorMessage } from '../api';
 
@@ -45,7 +49,8 @@ export default function ContractorsPage({ contractors = [], onContractorCreated,
   // Inventory view
   const [selectedContractor, setSelectedContractor] = useState(null);
   const [inventoryDialog, setInventoryDialog] = useState(false);
-  const [inventory, setInventory] = useState([]);
+  const [inventory, setInventory] = useState({ materials: [], finished_goods: [] });
+  const [inventoryTab, setInventoryTab] = useState(0);
 
   useEffect(() => {
     if (contractors.length > 0) {
@@ -99,8 +104,9 @@ export default function ContractorsPage({ contractors = [], onContractorCreated,
   const handleViewInventory = async (contractor) => {
     try {
       setSelectedContractor(contractor);
+      setInventoryTab(0);
       const res = await getContractorInventory(contractor.id);
-      setInventory(res.data || []);
+      setInventory(res.data || { materials: [], finished_goods: [] });
       setInventoryDialog(true);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to load inventory'));
@@ -284,40 +290,100 @@ export default function ContractorsPage({ contractors = [], onContractorCreated,
           Inventory: {selectedContractor?.name} ({selectedContractor?.code})
         </DialogTitle>
         <DialogContent>
-          <TableContainer>
-            <Table size="small">
-              <TableHead>
-                <TableRow>
-                  <TableCell>Material Code</TableCell>
-                  <TableCell>Material Name</TableCell>
-                  <TableCell>Unit</TableCell>
-                  <TableCell align="right">Quantity</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {inventory.length === 0 ? (
+          <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+            <Tabs value={inventoryTab} onChange={(e, v) => setInventoryTab(v)}>
+              <Tab
+                icon={<MaterialIcon />}
+                iconPosition="start"
+                label={`Materials (${inventory.materials?.length || 0})`}
+              />
+              <Tab
+                icon={<FinishedGoodIcon />}
+                iconPosition="start"
+                label={`Finished Goods (${inventory.finished_goods?.length || 0})`}
+              />
+            </Tabs>
+          </Box>
+
+          {/* Materials Tab */}
+          {inventoryTab === 0 && (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
                   <TableRow>
-                    <TableCell colSpan={4} align="center">
-                      No inventory items
-                    </TableCell>
+                    <TableCell>Material Code</TableCell>
+                    <TableCell>Material Name</TableCell>
+                    <TableCell align="right">Quantity</TableCell>
                   </TableRow>
-                ) : (
-                  inventory.map((item, idx) => (
-                    <TableRow key={idx}>
-                      <TableCell>{item.material_code}</TableCell>
-                      <TableCell>{item.material_name}</TableCell>
-                      <TableCell>{item.unit}</TableCell>
-                      <TableCell align="right">
-                        <Typography fontWeight={500}>
-                          {item.quantity?.toFixed(2)}
-                        </Typography>
+                </TableHead>
+                <TableBody>
+                  {(inventory.materials || []).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={3} align="center">
+                        No materials in inventory
                       </TableCell>
                     </TableRow>
-                  ))
-                )}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                  ) : (
+                    (inventory.materials || []).map((item, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{item.material_code}</TableCell>
+                        <TableCell>{item.material_name}</TableCell>
+                        <TableCell align="right">
+                          <Typography fontWeight={500}>
+                            {item.quantity?.toFixed(2)}
+                          </Typography>
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {/* Finished Goods Tab */}
+          {inventoryTab === 1 && (
+            <TableContainer>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell>FG Code</TableCell>
+                    <TableCell>Name</TableCell>
+                    <TableCell>Unit</TableCell>
+                    <TableCell align="right">Quantity</TableCell>
+                    <TableCell>Last Receipt</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {(inventory.finished_goods || []).length === 0 ? (
+                    <TableRow>
+                      <TableCell colSpan={5} align="center">
+                        No finished goods in inventory
+                      </TableCell>
+                    </TableRow>
+                  ) : (
+                    (inventory.finished_goods || []).map((item, idx) => (
+                      <TableRow key={idx}>
+                        <TableCell>{item.finished_good_code}</TableCell>
+                        <TableCell>{item.finished_good_name}</TableCell>
+                        <TableCell>{item.unit_of_measure || '-'}</TableCell>
+                        <TableCell align="right">
+                          <Typography fontWeight={500}>
+                            {item.quantity?.toFixed(2)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {item.last_receipt_date
+                            ? new Date(item.last_receipt_date).toLocaleDateString()
+                            : '-'}
+                        </TableCell>
+                      </TableRow>
+                    ))
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setInventoryDialog(false)}>Close</Button>
