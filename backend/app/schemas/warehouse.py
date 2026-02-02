@@ -1,6 +1,6 @@
 from datetime import datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Literal
 
 from pydantic import BaseModel, Field, field_validator
 
@@ -13,6 +13,12 @@ class WarehouseCreate(BaseModel):
     address: Optional[str] = Field(None, description="Full address")
     contact_person: Optional[str] = Field(None, max_length=100, description="Contact person name")
     phone: Optional[str] = Field(None, max_length=20, description="Contact phone number")
+
+    # New fields
+    owner_type: Literal['company', 'contractor'] = Field(default='company', description="Warehouse owner type")
+    contractor_id: Optional[int] = Field(None, description="Contractor ID if contractor-owned")
+    can_hold_materials: bool = Field(default=True, description="Can store raw materials")
+    can_hold_finished_goods: bool = Field(default=True, description="Can store finished goods")
 
     @field_validator('code')
     @classmethod
@@ -36,6 +42,12 @@ class WarehouseUpdate(BaseModel):
     contact_person: Optional[str] = Field(None, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     is_active: Optional[bool] = None
+
+    # New fields
+    owner_type: Optional[Literal['company', 'contractor']] = None
+    contractor_id: Optional[int] = None
+    can_hold_materials: Optional[bool] = None
+    can_hold_finished_goods: Optional[bool] = None
 
     @field_validator('code')
     @classmethod
@@ -61,9 +73,15 @@ class WarehouseResponse(BaseModel):
     address: Optional[str]
     contact_person: Optional[str]
     phone: Optional[str]
+    owner_type: str
+    contractor_id: Optional[int]
+    contractor_name: Optional[str] = None
+    contractor_code: Optional[str] = None
+    can_hold_materials: bool
+    can_hold_finished_goods: bool
     is_active: bool
     created_at: datetime
-    updated_at: datetime
+    updated_at: Optional[datetime]
 
     class Config:
         from_attributes = True
@@ -133,9 +151,39 @@ class WarehouseListResponse(BaseModel):
     code: str
     name: str
     location: Optional[str]
+    owner_type: str
+    contractor_id: Optional[int]
+    contractor_name: Optional[str] = None
+    contractor_code: Optional[str] = None
+    can_hold_materials: bool
+    can_hold_finished_goods: bool
     is_active: bool
     material_count: int = 0
+    fg_count: int = 0
     total_items_below_reorder: int = 0
 
     class Config:
         from_attributes = True
+
+
+class WarehouseFGInventoryResponse(BaseModel):
+    """Schema for warehouse finished goods inventory."""
+    id: int
+    warehouse_id: int
+    warehouse_name: str
+    finished_good_id: int
+    finished_good_name: str
+    finished_good_code: str
+    current_quantity: Decimal
+    unit_of_measure: Optional[str]
+    last_receipt_date: Optional[datetime]
+
+    class Config:
+        from_attributes = True
+
+    @field_validator('current_quantity', mode='before')
+    @classmethod
+    def convert_to_decimal(cls, v):
+        if v is None:
+            return Decimal(0)
+        return Decimal(str(v))

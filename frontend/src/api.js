@@ -57,11 +57,12 @@ export const resolveAnomaly = (anomalyId) => api.post(`/anomalies/${anomalyId}/r
 // ============================================================================
 
 // Warehouses
-export const getWarehouses = () => api.get('/v1/warehouses');
+export const getWarehouses = (params) => api.get('/v1/warehouses', { params });
 export const createWarehouse = (data) => api.post('/v1/warehouses', data);
 export const getWarehouse = (id) => api.get(`/v1/warehouses/${id}`);
 export const updateWarehouse = (id, data) => api.put(`/v1/warehouses/${id}`, data);
 export const getWarehouseInventory = (warehouseId) => api.get(`/v1/warehouses/${warehouseId}/inventory`);
+export const getWarehouseFGInventory = (warehouseId) => api.get(`/v1/warehouses/${warehouseId}/fg-inventory`);
 export const addWarehouseInventory = (warehouseId, data) => api.post(`/v1/warehouses/${warehouseId}/inventory`, data);
 export const updateWarehouseInventory = (warehouseId, inventoryId, data) =>
   api.put(`/v1/warehouses/${warehouseId}/inventory/${inventoryId}`, data);
