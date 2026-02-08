@@ -6,7 +6,7 @@ from datetime import datetime
 from decimal import Decimal
 
 from app.database import get_db
-from app.models import Contractor, ContractorInventory, Warehouse, WarehouseInventory, Material
+from app.models import Contractor, Warehouse, WarehouseInventory, Material
 from app.models.finished_goods_receipt import FinishedGoodsInventory
 from app.models.finished_good import FinishedGood
 from app.schemas import ContractorCreate, ContractorResponse, InventoryItem
@@ -55,23 +55,6 @@ def get_contractor_inventory(contractor_id: int, db: Session = Depends(get_db)):
     if not contractor:
         raise HTTPException(status_code=404, detail="Contractor not found")
 
-    # Get materials from legacy ContractorInventory table
-    legacy_inventory = db.query(ContractorInventory).filter(
-        ContractorInventory.contractor_id == contractor_id
-    ).all()
-
-    materials = [
-        InventoryItem(
-            id=item.id,
-            material_id=item.material_id,
-            material_code=item.material.code,
-            material_name=item.material.name,
-            quantity=float(item.quantity) if item.quantity else 0,
-            last_updated=item.last_updated,
-        )
-        for item in legacy_inventory
-    ]
-
     # Get contractor's warehouses
     contractor_warehouses = db.query(Warehouse).filter(
         Warehouse.contractor_id == contractor_id,
@@ -80,33 +63,28 @@ def get_contractor_inventory(contractor_id: int, db: Session = Depends(get_db)):
 
     warehouse_ids = [w.id for w in contractor_warehouses]
 
-    # Get materials from warehouse inventory (if any)
+    materials = []
+    finished_goods = []
+
     if warehouse_ids:
+        # Get materials from warehouse inventory
         warehouse_inventory = db.query(WarehouseInventory).filter(
             WarehouseInventory.warehouse_id.in_(warehouse_ids)
         ).all()
 
         for item in warehouse_inventory:
-            # Check if material already in list (from legacy)
-            existing = next((m for m in materials if m.material_id == item.material_id), None)
-            if existing:
-                # Update quantity (warehouse is source of truth now)
-                existing.quantity = float(item.current_quantity) if item.current_quantity else 0
-            else:
-                material = db.query(Material).filter(Material.id == item.material_id).first()
-                if material:
-                    materials.append(InventoryItem(
-                        id=item.id,
-                        material_id=item.material_id,
-                        material_code=material.code,
-                        material_name=material.name,
-                        quantity=float(item.current_quantity) if item.current_quantity else 0,
-                        last_updated=item.last_updated,
-                    ))
+            material = db.query(Material).filter(Material.id == item.material_id).first()
+            if material:
+                materials.append(InventoryItem(
+                    id=item.id,
+                    material_id=item.material_id,
+                    material_code=material.code,
+                    material_name=material.name,
+                    quantity=float(item.current_quantity) if item.current_quantity else 0,
+                    last_updated=item.last_updated,
+                ))
 
-    # Get finished goods from contractor's warehouses
-    finished_goods = []
-    if warehouse_ids:
+        # Get finished goods from contractor's warehouses
         fg_inventory = db.query(FinishedGoodsInventory).filter(
             FinishedGoodsInventory.warehouse_id.in_(warehouse_ids)
         ).all()

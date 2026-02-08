@@ -15,6 +15,8 @@ import {
   InputAdornment,
 } from '@mui/material';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import WarningIcon from '@mui/icons-material/Warning';
+import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { createIssuance, getWarehouses, getWarehouseInventory, getErrorMessage } from '../api';
 import { CollapsibleSection } from './common';
 
@@ -35,10 +37,23 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
   const [warehouses, setWarehouses] = useState([]);
   const [warehouseInventory, setWarehouseInventory] = useState([]);
   const [availableQty, setAvailableQty] = useState(null);
+  const [contractorWarehouse, setContractorWarehouse] = useState(null);
 
   useEffect(() => {
     loadWarehouses();
   }, []);
+
+  // Find contractor's warehouse when contractor changes
+  useEffect(() => {
+    if (contractorId && warehouses.length > 0) {
+      const ctrWarehouse = warehouses.find(
+        (w) => w.contractor_id === parseInt(contractorId) && w.can_hold_materials
+      );
+      setContractorWarehouse(ctrWarehouse || null);
+    } else {
+      setContractorWarehouse(null);
+    }
+  }, [contractorId, warehouses]);
 
   useEffect(() => {
     if (warehouseId) {
@@ -118,6 +133,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
     return (
       warehouseId &&
       contractorId &&
+      contractorWarehouse && // Contractor must have a warehouse
       materialId &&
       quantity &&
       !validateQuantity()
@@ -245,6 +261,25 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
             <FormHelperText>{getFieldError('contractor')}</FormHelperText>
           )}
         </FormControl>
+
+        {/* Show destination warehouse info */}
+        {contractorId && (
+          <Alert
+            severity={contractorWarehouse ? 'info' : 'warning'}
+            icon={contractorWarehouse ? <LocalShippingIcon /> : <WarningIcon />}
+            sx={{ mb: 2 }}
+          >
+            {contractorWarehouse ? (
+              <>
+                <strong>Destination:</strong> {contractorWarehouse.name} ({contractorWarehouse.code})
+              </>
+            ) : (
+              <>
+                This contractor does not have a warehouse. Please create a warehouse for this contractor first.
+              </>
+            )}
+          </Alert>
+        )}
 
         <FormControl
           fullWidth

@@ -12,7 +12,6 @@ from app.models import (
     Contractor,
     Material,
     WarehouseInventory,
-    ContractorInventory,
     MaterialIssuance,
 )
 from app.schemas.issuance import (
@@ -160,24 +159,41 @@ def create_issuance(
     warehouse_inv.current_quantity = Decimal(str(warehouse_inv.current_quantity)) - deduction_qty
     warehouse_inv.last_updated = datetime.utcnow()
 
-    # 8. Add to contractor inventory (with row lock)
-    contractor_inv = db.query(ContractorInventory).filter(
-        ContractorInventory.contractor_id == request.contractor_id,
-        ContractorInventory.material_id == request.material_id,
+    # 8. Find contractor's warehouse and add to its inventory
+    contractor_warehouse = db.query(Warehouse).filter(
+        Warehouse.contractor_id == request.contractor_id,
+        Warehouse.is_active == True,
+        Warehouse.can_hold_materials == True,
+    ).first()
+
+    if not contractor_warehouse:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Contractor '{contractor.name}' does not have an active warehouse that can hold materials. "
+                   f"Please create a warehouse for this contractor first."
+        )
+
+    # Add to contractor's warehouse inventory (with row lock)
+    contractor_wh_inv = db.query(WarehouseInventory).filter(
+        WarehouseInventory.warehouse_id == contractor_warehouse.id,
+        WarehouseInventory.material_id == request.material_id,
     ).with_for_update().first()
 
-    if contractor_inv:
-        # Add to existing inventory (contractor inventory uses Float, convert appropriately)
-        contractor_inv.quantity = float(Decimal(str(contractor_inv.quantity)) + quantity_in_base_unit)
-        contractor_inv.last_updated = datetime.utcnow()
+    if contractor_wh_inv:
+        # Add to existing inventory
+        contractor_wh_inv.current_quantity = Decimal(str(contractor_wh_inv.current_quantity)) + quantity_in_base_unit
+        contractor_wh_inv.last_updated = datetime.utcnow()
     else:
-        # Create new contractor inventory record
-        contractor_inv = ContractorInventory(
-            contractor_id=request.contractor_id,
+        # Create new warehouse inventory record for contractor's warehouse
+        contractor_wh_inv = WarehouseInventory(
+            warehouse_id=contractor_warehouse.id,
             material_id=request.material_id,
-            quantity=float(quantity_in_base_unit),
+            current_quantity=quantity_in_base_unit,
+            unit_of_measure=base_unit,
+            reorder_point=Decimal(0),
+            reorder_quantity=Decimal(0),
         )
-        db.add(contractor_inv)
+        db.add(contractor_wh_inv)
 
     # 9. Generate issuance number
     issuance_number = MaterialIssuance.generate_issuance_number(db)
