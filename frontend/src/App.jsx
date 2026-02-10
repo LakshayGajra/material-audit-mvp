@@ -22,6 +22,7 @@ import BOMManagement from './components/BOMManagement';
 import ThresholdsPage from './components/ThresholdsPage';
 import MaterialsPage from './components/MaterialsPage';
 import ContractorsPage from './components/ContractorsPage';
+import StockTransferPage from './components/StockTransferPage';
 import LearnPage from './components/LearnPage';
 
 function App() {
@@ -124,6 +125,8 @@ function App() {
               refreshKey={refreshKey}
             />
           );
+        case 'transfers':
+          return <StockTransferPage />;
       }
     }
 

@@ -31,6 +31,10 @@ from app.models.inventory_check import (
     InventoryCheck,
     InventoryCheckLine,
 )
+from app.models.stock_transfer import (
+    StockTransfer,
+    StockTransferLine,
+)
 
 __all__ = [
     "Material",
@@ -62,4 +66,6 @@ __all__ = [
     "FinishedGoodsReceiptLine",
     "InventoryCheck",
     "InventoryCheckLine",
+    "StockTransfer",
+    "StockTransferLine",
 ]

@@ -40,6 +40,7 @@ import {
   VerifiedUser as VerifyIcon,
   AdminPanelSettings as AdminIcon,
   Visibility as ViewIcon,
+  SwapHoriz as TransferIcon,
 } from '@mui/icons-material';
 
 const SIDEBAR_WIDTH = 260;
@@ -98,6 +99,7 @@ const fullNavigationConfig = [
     views: ['all', 'warehouse', 'admin'],
     children: [
       { id: 'warehouses', label: 'Inventory', icon: InventoryIcon },
+      { id: 'transfers', label: 'Stock Transfers', icon: TransferIcon },
     ],
   },
   {

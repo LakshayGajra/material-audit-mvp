@@ -161,6 +161,35 @@ const sections = [
     },
   },
   {
+    id: 'stock-transfers',
+    title: 'Stock Transfers',
+    icon: TransferIcon,
+    parent: 'Warehouse',
+    content: {
+      description: 'Move materials or finished goods between any warehouses - company to company, contractor to contractor, or any combination.',
+      workflow: [
+        { status: 'DRAFT', action: 'Create transfer with items', next: 'Submit or complete directly' },
+        { status: 'SUBMITTED', action: 'Transfer pending approval', next: 'Complete or cancel' },
+        { status: 'COMPLETED', action: 'Inventory moved', next: 'Transfer finished' },
+      ],
+      features: [
+        { name: 'Any-to-Any Transfer', desc: 'Move stock between any two warehouses regardless of owner type' },
+        { name: 'Materials or Finished Goods', desc: 'Transfer raw materials OR finished goods in a single transfer' },
+        { name: 'Stock Validation', desc: 'System checks source has enough stock before allowing transfer' },
+        { name: 'Audit Trail', desc: 'Full history of who requested, approved, and completed each transfer' },
+        { name: 'Multi-Item Transfer', desc: 'Move multiple items in a single transfer document' },
+      ],
+      steps: [
+        'Click "New Transfer" and select transfer type (Materials or Finished Goods)',
+        'Select source warehouse (where items are coming from)',
+        'Select destination warehouse (where items are going)',
+        'Add items to transfer with quantities',
+        'Create the transfer, then click Complete to move the inventory',
+      ],
+      tip: 'Use stock transfers to balance inventory between locations or move finished goods from contractor sites to company warehouses.',
+    },
+  },
+  {
     id: 'purchase-orders',
     title: 'Purchase Orders',
     icon: POIcon,

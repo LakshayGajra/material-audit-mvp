@@ -175,4 +175,12 @@ export const enterCounts = (id, data) => api.put(`/v1/inventory-checks/${id}/cou
 export const saveCountsDraft = (id, data) => api.post(`/v1/inventory-checks/${id}/save-counts`, data);
 export const resolveInventoryCheck = (id, data) => api.put(`/v1/inventory-checks/${id}/resolve`, data);
 
+// Stock Transfers
+export const getStockTransfers = (params) => api.get('/v1/stock-transfers', { params });
+export const createStockTransfer = (data) => api.post('/v1/stock-transfers', data);
+export const getStockTransfer = (id) => api.get(`/v1/stock-transfers/${id}`);
+export const submitStockTransfer = (id) => api.post(`/v1/stock-transfers/${id}/submit`);
+export const completeStockTransfer = (id, data) => api.post(`/v1/stock-transfers/${id}/complete`, data);
+export const cancelStockTransfer = (id) => api.post(`/v1/stock-transfers/${id}/cancel`);
+
 export default api;
