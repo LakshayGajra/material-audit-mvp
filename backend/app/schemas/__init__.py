@@ -1,5 +1,5 @@
 # Re-export all schemas from the legacy schemas module
-from app.schemas_legacy import (
+from app.schemas.core import (
     MaterialCreate,
     MaterialResponse,
     ContractorCreate,
