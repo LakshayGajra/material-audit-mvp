@@ -14,20 +14,19 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import (
     Anomaly,
-    Audit,
     Contractor,
     ContractorInventory,
+    InventoryCheck,
     Material,
     MaterialIssuance,
     MaterialRejection,
     ProductionRecord,
     PurchaseOrder,
-    Reconciliation,
     Warehouse,
     WarehouseInventory,
 )
 
-router = APIRouter(prefix="/api/v1/dashboard", tags=["Dashboard"])
+router = APIRouter(prefix="/api/dashboard", tags=["Dashboard"])
 
 
 class WarehouseSummary(BaseModel):
@@ -62,12 +61,8 @@ class AnomalySummary(BaseModel):
     by_severity: AnomalySeverity
 
 
-class AuditSummary(BaseModel):
+class InventoryCheckSummary(BaseModel):
     in_progress: int
-    pending_analysis: int
-
-
-class ReconciliationSummary(BaseModel):
     pending_review: int
 
 
@@ -88,8 +83,7 @@ class DashboardSummary(BaseModel):
     materials: MaterialSummary
     purchase_orders: PurchaseOrderSummary
     anomalies: AnomalySummary
-    audits: AuditSummary
-    reconciliations: ReconciliationSummary
+    inventory_checks: InventoryCheckSummary
     rejections: RejectionSummary
     recent_activity: List[ActivityItem]
 
@@ -107,8 +101,6 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
 
     # Contractor summary
     contractor_count = db.query(func.count(Contractor.id)).scalar() or 0
-    # Active = has inventory or activity in last 30 days
-    thirty_days_ago = datetime.now() - timedelta(days=30)
     active_contractors = db.query(func.count(func.distinct(ContractorInventory.contractor_id))).scalar() or 0
 
     # Material summary
@@ -150,17 +142,12 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
         Anomaly.variance_percent <= 5
     ).scalar() or 0
 
-    # Audit summary
-    audits_in_progress = db.query(func.count(Audit.id)).filter(
-        Audit.status == "IN_PROGRESS"
+    # Inventory check summary (replaces old audit + reconciliation summaries)
+    checks_in_progress = db.query(func.count(InventoryCheck.id)).filter(
+        InventoryCheck.status.in_(["draft", "counting"])
     ).scalar() or 0
-    audits_pending_analysis = db.query(func.count(Audit.id)).filter(
-        Audit.status.in_(["SUBMITTED", "UNDER_REVIEW"])
-    ).scalar() or 0
-
-    # Reconciliation summary
-    recon_pending_review = db.query(func.count(Reconciliation.id)).filter(
-        Reconciliation.status == "SUBMITTED"
+    checks_pending_review = db.query(func.count(InventoryCheck.id)).filter(
+        InventoryCheck.status == "review"
     ).scalar() or 0
 
     # Rejection summary
@@ -237,12 +224,9 @@ def get_dashboard_summary(db: Session = Depends(get_db)):
                 LOW=low,
             ),
         ),
-        audits=AuditSummary(
-            in_progress=audits_in_progress,
-            pending_analysis=audits_pending_analysis,
-        ),
-        reconciliations=ReconciliationSummary(
-            pending_review=recon_pending_review,
+        inventory_checks=InventoryCheckSummary(
+            in_progress=checks_in_progress,
+            pending_review=checks_pending_review,
         ),
         rejections=RejectionSummary(
             pending_approval=rejection_pending_approval,

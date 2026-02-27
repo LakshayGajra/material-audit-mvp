@@ -14,7 +14,7 @@ from app.schemas.supplier import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/suppliers", tags=["suppliers"])
+router = APIRouter(prefix="/api/suppliers", tags=["suppliers"])
 
 
 @router.post("", response_model=SupplierResponse, status_code=201)

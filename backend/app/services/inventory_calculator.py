@@ -2,7 +2,7 @@
 Expected Inventory Calculation Service
 
 Calculates what inventory SHOULD be for a contractor based on:
-- Opening balance (from last closed audit or 0)
+- Opening balance (from last resolved inventory check or 0)
 - + Material issuances
 - - Production consumption
 - - Material rejections (returned to warehouse)
@@ -15,8 +15,7 @@ from typing import Optional, Tuple
 from sqlalchemy import func
 from sqlalchemy.orm import Session
 
-from app.models.audit import Audit
-from app.models.audit_line_item import AuditLineItem
+from app.models.inventory_check import InventoryCheck, InventoryCheckLine
 from app.models.consumption import Consumption
 from app.models.material_issuance import MaterialIssuance
 from app.models.material_rejection import MaterialRejection
@@ -41,7 +40,7 @@ class InventoryCalculationResult:
         rejected: Decimal,
         start_date: date,
         end_date: date,
-        last_audit_id: Optional[int] = None
+        last_check_id: Optional[int] = None
     ):
         self.expected = expected
         self.opening_balance = opening_balance
@@ -50,7 +49,7 @@ class InventoryCalculationResult:
         self.rejected = rejected
         self.start_date = start_date
         self.end_date = end_date
-        self.last_audit_id = last_audit_id
+        self.last_check_id = last_check_id
 
     def to_dict(self) -> dict:
         return {
@@ -61,7 +60,7 @@ class InventoryCalculationResult:
             "rejected": float(self.rejected),
             "start_date": self.start_date.isoformat(),
             "end_date": self.end_date.isoformat(),
-            "last_audit_id": self.last_audit_id,
+            "last_check_id": self.last_check_id,
         }
 
 
@@ -119,8 +118,8 @@ def calculate_expected_inventory_detailed(
         InventoryCalculationError: If calculation fails
     """
     try:
-        # Step 1: Find last completed audit for this contractor-material BEFORE as_of_date
-        opening_balance, start_date, last_audit_id = _get_opening_balance(
+        # Step 1: Find last resolved inventory check for this contractor-material BEFORE as_of_date
+        opening_balance, start_date, last_check_id = _get_opening_balance(
             contractor_id=contractor_id,
             material_id=material_id,
             as_of_date=as_of_date,
@@ -177,7 +176,7 @@ def calculate_expected_inventory_detailed(
             rejected=rejected,
             start_date=start_date,
             end_date=as_of_date,
-            last_audit_id=last_audit_id
+            last_check_id=last_check_id
         )
 
     except Exception as e:
@@ -195,40 +194,40 @@ def _get_opening_balance(
     db: Session
 ) -> Tuple[Decimal, date, Optional[int]]:
     """
-    Get opening balance from last closed audit.
+    Get opening balance from last resolved inventory check.
 
     Returns:
-        Tuple of (opening_balance, start_date, last_audit_id)
+        Tuple of (opening_balance, start_date, last_check_id)
     """
-    # Find last completed audit for this contractor-material BEFORE as_of_date
-    last_audit_line = db.query(AuditLineItem).join(Audit).filter(
-        Audit.contractor_id == contractor_id,
-        Audit.status == Audit.STATUS_CLOSED,
-        AuditLineItem.material_id == material_id,
-        Audit.audit_date < as_of_date
-    ).order_by(Audit.audit_date.desc()).first()
+    # Find last resolved inventory check for this contractor-material BEFORE as_of_date
+    last_check_line = db.query(InventoryCheckLine).join(InventoryCheck).filter(
+        InventoryCheck.contractor_id == contractor_id,
+        InventoryCheck.status == "resolved",
+        InventoryCheckLine.material_id == material_id,
+        InventoryCheck.check_date < as_of_date
+    ).order_by(InventoryCheck.check_date.desc()).first()
 
-    if last_audit_line and last_audit_line.physical_count is not None:
-        # Use physical count from last audit as opening balance
-        opening_balance = Decimal(str(last_audit_line.physical_count))
-        # Start counting from day AFTER the audit
-        start_date = last_audit_line.audit.audit_date + timedelta(days=1)
-        last_audit_id = last_audit_line.audit.id
+    if last_check_line and last_check_line.actual_quantity is not None:
+        # Use actual count from last check as opening balance
+        opening_balance = Decimal(str(last_check_line.actual_quantity))
+        # Start counting from day AFTER the check
+        start_date = last_check_line.check.check_date + timedelta(days=1)
+        last_check_id = last_check_line.check.id
 
         logger.debug(
-            f"Found previous audit {last_audit_id} on {last_audit_line.audit.audit_date} "
-            f"with physical_count={opening_balance}"
+            f"Found previous inventory check {last_check_id} on {last_check_line.check.check_date} "
+            f"with actual_quantity={opening_balance}"
         )
     else:
-        # No previous audit found - start from zero
+        # No previous check found - start from zero
         opening_balance = Decimal("0")
         # Use earliest possible date (practical minimum)
         start_date = date(2000, 1, 1)
-        last_audit_id = None
+        last_check_id = None
 
-        logger.debug("No previous audit found, using opening balance of 0")
+        logger.debug("No previous inventory check found, using opening balance of 0")
 
-    return opening_balance, start_date, last_audit_id
+    return opening_balance, start_date, last_check_id
 
 
 def _get_total_issued(

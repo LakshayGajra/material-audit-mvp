@@ -25,7 +25,7 @@ from app.schemas.stock_transfer import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/stock-transfers", tags=["stock-transfers"])
+router = APIRouter(prefix="/api/stock-transfers", tags=["stock-transfers"])
 
 
 def build_transfer_response(transfer: StockTransfer) -> StockTransferResponse:

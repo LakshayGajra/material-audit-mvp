@@ -15,22 +15,20 @@ from sqlalchemy.orm import Session
 from app.database import get_db
 from app.models import (
     Anomaly,
-    Audit,
-    AuditLineItem,
     Contractor,
     ContractorInventory,
     Consumption,
     InventoryAdjustment,
+    InventoryCheck,
+    InventoryCheckLine,
     Material,
     MaterialIssuance,
     MaterialRejection,
-    Reconciliation,
-    ReconciliationLine,
     Warehouse,
     WarehouseInventory,
 )
 
-router = APIRouter(prefix="/api/v1/reports", tags=["Reports"])
+router = APIRouter(prefix="/api/reports", tags=["Reports"])
 
 
 def create_excel_response(workbook, filename: str):
@@ -208,7 +206,7 @@ def get_contractor_audit_history(
     db: Session = Depends(get_db),
 ):
     """
-    Download audit and reconciliation history for a contractor.
+    Download inventory check history for a contractor.
     Returns an Excel file.
     """
     contractor = db.query(Contractor).filter(Contractor.id == contractor_id).first()
@@ -228,58 +226,34 @@ def get_contractor_audit_history(
     header_font = Font(bold=True)
     header_fill = PatternFill(start_color="CCCCCC", end_color="CCCCCC", fill_type="solid")
 
-    # Sheet 1: Audits
+    # Sheet 1: Inventory Checks
     ws1 = wb.active
-    ws1.title = "Audits"
-    headers = ["Audit #", "Date", "Auditor", "Status", "Material", "Expected", "Physical", "Variance", "Variance %"]
+    ws1.title = "Inventory Checks"
+    headers = ["Check #", "Type", "Date", "Counted By", "Status", "Material", "Expected", "Actual", "Variance", "Variance %"]
     for col, header in enumerate(headers, 1):
         cell = ws1.cell(row=1, column=col, value=header)
         cell.font = header_font
         cell.fill = header_fill
 
-    audits = db.query(Audit).filter(Audit.contractor_id == contractor_id).all()
+    checks = db.query(InventoryCheck).filter(InventoryCheck.contractor_id == contractor_id).all()
     row_num = 2
-    for audit in audits:
-        line_items = db.query(AuditLineItem).filter(AuditLineItem.audit_id == audit.id).all()
+    for check in checks:
+        line_items = db.query(InventoryCheckLine).filter(InventoryCheckLine.check_id == check.id).all()
         for item in line_items:
             material = db.query(Material).filter(Material.id == item.material_id).first()
-            ws1.cell(row=row_num, column=1, value=audit.audit_number)
-            ws1.cell(row=row_num, column=2, value=str(audit.audit_date))
-            ws1.cell(row=row_num, column=3, value=audit.auditor_name)
-            ws1.cell(row=row_num, column=4, value=audit.status)
-            ws1.cell(row=row_num, column=5, value=material.name if material else "Unknown")
-            ws1.cell(row=row_num, column=6, value=float(item.expected_quantity) if item.expected_quantity else 0)
-            ws1.cell(row=row_num, column=7, value=float(item.physical_quantity) if item.physical_quantity else 0)
-            ws1.cell(row=row_num, column=8, value=float(item.variance) if item.variance else 0)
-            ws1.cell(row=row_num, column=9, value=float(item.variance_percentage) if item.variance_percentage else 0)
+            ws1.cell(row=row_num, column=1, value=check.check_number)
+            ws1.cell(row=row_num, column=2, value=check.check_type)
+            ws1.cell(row=row_num, column=3, value=str(check.check_date))
+            ws1.cell(row=row_num, column=4, value=check.counted_by)
+            ws1.cell(row=row_num, column=5, value=check.status)
+            ws1.cell(row=row_num, column=6, value=material.name if material else "Unknown")
+            ws1.cell(row=row_num, column=7, value=float(item.expected_quantity) if item.expected_quantity else 0)
+            ws1.cell(row=row_num, column=8, value=float(item.actual_quantity) if item.actual_quantity else 0)
+            ws1.cell(row=row_num, column=9, value=float(item.variance) if item.variance else 0)
+            ws1.cell(row=row_num, column=10, value=float(item.variance_percent) if item.variance_percent else 0)
             row_num += 1
 
-    # Sheet 2: Reconciliations
-    ws2 = wb.create_sheet("Reconciliations")
-    headers = ["Recon #", "Date", "Period", "Status", "Material", "System Qty", "Reported Qty", "Variance", "Variance %"]
-    for col, header in enumerate(headers, 1):
-        cell = ws2.cell(row=1, column=col, value=header)
-        cell.font = header_font
-        cell.fill = header_fill
-
-    reconciliations = db.query(Reconciliation).filter(Reconciliation.contractor_id == contractor_id).all()
-    row_num = 2
-    for recon in reconciliations:
-        line_items = db.query(ReconciliationLine).filter(ReconciliationLine.reconciliation_id == recon.id).all()
-        for item in line_items:
-            material = db.query(Material).filter(Material.id == item.material_id).first()
-            ws2.cell(row=row_num, column=1, value=recon.reconciliation_number)
-            ws2.cell(row=row_num, column=2, value=str(recon.reconciliation_date))
-            ws2.cell(row=row_num, column=3, value=recon.period_type)
-            ws2.cell(row=row_num, column=4, value=recon.status)
-            ws2.cell(row=row_num, column=5, value=material.name if material else "Unknown")
-            ws2.cell(row=row_num, column=6, value=float(item.system_quantity) if item.system_quantity else 0)
-            ws2.cell(row=row_num, column=7, value=float(item.reported_quantity) if item.reported_quantity else 0)
-            ws2.cell(row=row_num, column=8, value=float(item.variance) if item.variance else 0)
-            ws2.cell(row=row_num, column=9, value=float(item.variance_percentage) if item.variance_percentage else 0)
-            row_num += 1
-
-    # Sheet 3: Adjustments
+    # Sheet 2: Adjustments
     ws3 = wb.create_sheet("Inventory Adjustments")
     headers = ["Adj #", "Date", "Material", "Type", "Qty Before", "Qty After", "Adjustment", "Reason", "Status"]
     for col, header in enumerate(headers, 1):

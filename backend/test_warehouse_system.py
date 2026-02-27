@@ -60,14 +60,14 @@ def main():
             "phone": "9876543210"
         }
 
-        resp = requests.post(f"{BASE_URL}/api/v1/warehouses", json=warehouse_data)
+        resp = requests.post(f"{BASE_URL}/api/warehouses", json=warehouse_data)
         if resp.status_code == 201:
             warehouse = resp.json()
             warehouse_id = warehouse["id"]
             log_success(f"Created warehouse: {warehouse['code']} (ID: {warehouse_id})")
         elif resp.status_code == 400 and "already exists" in resp.text:
             # Warehouse exists, fetch it
-            resp = requests.get(f"{BASE_URL}/api/v1/warehouses")
+            resp = requests.get(f"{BASE_URL}/api/warehouses")
             warehouses = resp.json()
             warehouse = next((w for w in warehouses if w["code"] == "WH-TEST-001"), None)
             if warehouse:
@@ -94,13 +94,13 @@ def main():
             "payment_terms": "Net 30"
         }
 
-        resp = requests.post(f"{BASE_URL}/api/v1/suppliers", json=supplier_data)
+        resp = requests.post(f"{BASE_URL}/api/suppliers", json=supplier_data)
         if resp.status_code == 201:
             supplier = resp.json()
             supplier_id = supplier["id"]
             log_success(f"Created supplier: {supplier['code']} (ID: {supplier_id})")
         elif resp.status_code == 400 and "already exists" in resp.text:
-            resp = requests.get(f"{BASE_URL}/api/v1/suppliers")
+            resp = requests.get(f"{BASE_URL}/api/suppliers")
             suppliers = resp.json()
             supplier = next((s for s in suppliers if s["code"] == "SUP-STEEL-001"), None)
             if supplier:
@@ -152,7 +152,7 @@ def main():
             "conversion_factor": 1000
         }
 
-        resp = requests.post(f"{BASE_URL}/api/v1/unit-conversions", json=conversion_data)
+        resp = requests.post(f"{BASE_URL}/api/unit-conversions", json=conversion_data)
         if resp.status_code == 201:
             conversion = resp.json()
             log_success(f"Created conversion: {conversion['from_unit']} -> {conversion['to_unit']} "
@@ -170,7 +170,7 @@ def main():
             "from_unit": "tons",
             "to_unit": "kg"
         }
-        resp = requests.post(f"{BASE_URL}/api/v1/unit-conversions/convert", json=test_conv)
+        resp = requests.post(f"{BASE_URL}/api/unit-conversions/convert", json=test_conv)
         if resp.status_code == 200:
             result = resp.json()
             log_success(f"Conversion test: {result['original_quantity']} {result['from_unit']} = "
@@ -198,7 +198,7 @@ def main():
             ]
         }
 
-        resp = requests.post(f"{BASE_URL}/api/v1/purchase-orders", json=po_data)
+        resp = requests.post(f"{BASE_URL}/api/purchase-orders", json=po_data)
         if resp.status_code == 201:
             po = resp.json()
             po_id = po["id"]
@@ -217,7 +217,7 @@ def main():
         # ============================================================
         log_step(6, "Submit PO (DRAFT -> SUBMITTED)")
 
-        resp = requests.put(f"{BASE_URL}/api/v1/purchase-orders/{po_id}/submit")
+        resp = requests.put(f"{BASE_URL}/api/purchase-orders/{po_id}/submit")
         if resp.status_code == 200:
             po = resp.json()
             log_success(f"PO submitted. Status: {po['status']}")
@@ -235,7 +235,7 @@ def main():
             "notes": "Approved for testing"
         }
 
-        resp = requests.put(f"{BASE_URL}/api/v1/purchase-orders/{po_id}/approve", json=approval_data)
+        resp = requests.put(f"{BASE_URL}/api/purchase-orders/{po_id}/approve", json=approval_data)
         if resp.status_code == 200:
             po = resp.json()
             log_success(f"PO approved. Status: {po['status']}")
@@ -246,7 +246,7 @@ def main():
             return
 
         # Get PO line ID for receipts
-        resp = requests.get(f"{BASE_URL}/api/v1/purchase-orders/{po_id}")
+        resp = requests.get(f"{BASE_URL}/api/purchase-orders/{po_id}")
         po = resp.json()
         po_line_id = po['lines'][0]['id']
 
@@ -272,7 +272,7 @@ def main():
             ]
         }
 
-        resp = requests.post(f"{BASE_URL}/api/v1/goods-receipts", json=grn_data)
+        resp = requests.post(f"{BASE_URL}/api/goods-receipts", json=grn_data)
         if resp.status_code == 201:
             grn = resp.json()
             log_success(f"Created GRN: {grn['grn_number']}")
@@ -282,7 +282,7 @@ def main():
             return
 
         # Verify warehouse inventory
-        resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse_id}/inventory")
+        resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse_id}/inventory")
         if resp.status_code == 200:
             inventory = resp.json()
             steel_inv = next((i for i in inventory if i['material_id'] == material_id), None)
@@ -297,7 +297,7 @@ def main():
                 log_error("Material not found in warehouse inventory")
 
         # Verify PO status
-        resp = requests.get(f"{BASE_URL}/api/v1/purchase-orders/{po_id}")
+        resp = requests.get(f"{BASE_URL}/api/purchase-orders/{po_id}")
         po = resp.json()
         log(f"PO Status: {po['status']}")
         log(f"PO Line: {po['lines'][0]['quantity_received']} received, "
@@ -330,7 +330,7 @@ def main():
             ]
         }
 
-        resp = requests.post(f"{BASE_URL}/api/v1/goods-receipts", json=grn_data_2)
+        resp = requests.post(f"{BASE_URL}/api/goods-receipts", json=grn_data_2)
         if resp.status_code == 201:
             grn = resp.json()
             log_success(f"Created GRN: {grn['grn_number']}")
@@ -340,7 +340,7 @@ def main():
             return
 
         # Verify final warehouse inventory
-        resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse_id}/inventory")
+        resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse_id}/inventory")
         if resp.status_code == 200:
             inventory = resp.json()
             steel_inv = next((i for i in inventory if i['material_id'] == material_id), None)
@@ -353,7 +353,7 @@ def main():
                     log_error(f"Expected {expected_qty} tons but got {steel_inv['current_quantity']}")
 
         # Verify final PO status
-        resp = requests.get(f"{BASE_URL}/api/v1/purchase-orders/{po_id}")
+        resp = requests.get(f"{BASE_URL}/api/purchase-orders/{po_id}")
         po = resp.json()
         log(f"Final PO Status: {po['status']}")
         log(f"PO Line: {po['lines'][0]['quantity_received']} received, "

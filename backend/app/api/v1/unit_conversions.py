@@ -21,7 +21,7 @@ from app.services.unit_conversion_service import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/unit-conversions", tags=["unit-conversions"])
+router = APIRouter(prefix="/api/unit-conversions", tags=["unit-conversions"])
 
 
 def build_conversion_response(conversion: UnitConversion) -> UnitConversionResponse:
@@ -206,7 +206,7 @@ def convert_quantity_endpoint(
 
 
 # Additional endpoint under materials path
-materials_router = APIRouter(prefix="/api/v1/materials", tags=["materials"])
+materials_router = APIRouter(prefix="/api/materials", tags=["materials"])
 
 
 @materials_router.get("/{material_id}/conversions", response_model=list[UnitConversionResponse])

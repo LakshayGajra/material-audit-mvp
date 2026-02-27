@@ -27,7 +27,7 @@ from app.schemas.purchase_order import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/purchase-orders", tags=["purchase-orders"])
+router = APIRouter(prefix="/api/purchase-orders", tags=["purchase-orders"])
 
 
 def generate_po_number(db: Session) -> str:

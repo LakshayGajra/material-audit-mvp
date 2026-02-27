@@ -25,7 +25,7 @@ from app.schemas.inventory_check import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/inventory-checks", tags=["inventory-checks"])
+router = APIRouter(prefix="/api/inventory-checks", tags=["inventory-checks"])
 
 
 def generate_check_number(db: Session) -> str:

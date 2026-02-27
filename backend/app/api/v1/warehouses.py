@@ -21,7 +21,7 @@ from app.schemas.warehouse import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/warehouses", tags=["warehouses"])
+router = APIRouter(prefix="/api/warehouses", tags=["warehouses"])
 
 
 def build_warehouse_response(warehouse: Warehouse) -> dict:

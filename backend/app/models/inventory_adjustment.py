@@ -46,7 +46,7 @@ class InventoryAdjustment(Base):
     adjustment_number = Column(String(50), unique=True, nullable=False)
     contractor_id = Column(Integer, ForeignKey("contractors.id"), nullable=False)
     material_id = Column(Integer, ForeignKey("materials.id"), nullable=False)
-    audit_line_item_id = Column(Integer, ForeignKey("audit_line_items.id"), nullable=True)
+    inventory_check_line_id = Column(Integer, ForeignKey("inventory_check_lines.id"), nullable=True)
     adjustment_type = Column(String(30), nullable=False)
     quantity_before = Column(Numeric(15, 6), nullable=False)
     quantity_after = Column(Numeric(15, 6), nullable=False)
@@ -66,7 +66,7 @@ class InventoryAdjustment(Base):
     # Relationships
     contractor = relationship("Contractor", backref="inventory_adjustments")
     material = relationship("Material", backref="inventory_adjustments")
-    audit_line_item = relationship("AuditLineItem", backref="inventory_adjustments")
+    inventory_check_line = relationship("InventoryCheckLine", backref="inventory_adjustments")
 
     # Indexes
     __table_args__ = (
@@ -86,7 +86,7 @@ class InventoryAdjustment(Base):
             "adjustment_number": self.adjustment_number,
             "contractor_id": self.contractor_id,
             "material_id": self.material_id,
-            "audit_line_item_id": self.audit_line_item_id,
+            "inventory_check_line_id": self.inventory_check_line_id,
             "adjustment_type": self.adjustment_type,
             "quantity_before": float(self.quantity_before) if self.quantity_before else None,
             "quantity_after": float(self.quantity_after) if self.quantity_after else None,

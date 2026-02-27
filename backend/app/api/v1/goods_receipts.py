@@ -27,7 +27,7 @@ from app.services.unit_conversion_service import convert_quantity
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/goods-receipts", tags=["goods-receipts"])
+router = APIRouter(prefix="/api/goods-receipts", tags=["goods-receipts"])
 
 
 def generate_grn_number(db: Session) -> str:

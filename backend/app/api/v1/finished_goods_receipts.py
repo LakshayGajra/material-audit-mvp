@@ -33,7 +33,7 @@ from app.schemas.finished_goods_receipt import (
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/fgr", tags=["finished-goods-receipts"])
+router = APIRouter(prefix="/api/fgr", tags=["finished-goods-receipts"])
 
 
 def generate_fgr_number(db: Session) -> str:
@@ -471,7 +471,7 @@ def submit_fgr(fgr_id: int, db: Session = Depends(get_db)):
 # Finished Goods Inventory Endpoints
 # ============================================================================
 
-fg_inventory_router = APIRouter(prefix="/api/v1/finished-goods-inventory", tags=["finished-goods-inventory"])
+fg_inventory_router = APIRouter(prefix="/api/finished-goods-inventory", tags=["finished-goods-inventory"])
 
 
 @fg_inventory_router.get("", response_model=list[FinishedGoodsInventoryResponse])

@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.database import get_db
 from app.models import Contractor, Material, VarianceThreshold
-from app.schemas.audit import (
+from app.schemas.threshold import (
     ThresholdCreate,
     ThresholdUpdate,
     ThresholdResponse,
@@ -22,7 +22,7 @@ from app.services.threshold_service import get_threshold_with_source
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/thresholds", tags=["Variance Thresholds"])
+router = APIRouter(prefix="/api/thresholds", tags=["Variance Thresholds"])
 
 
 @router.post("", response_model=ThresholdResponse)

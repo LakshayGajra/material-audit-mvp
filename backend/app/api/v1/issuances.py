@@ -23,7 +23,7 @@ from app.services.unit_conversion_service import convert_quantity, get_conversio
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/issuances", tags=["issuances"])
+router = APIRouter(prefix="/api/issuances", tags=["issuances"])
 
 
 def build_issuance_response(issuance: MaterialIssuance) -> IssuanceResponse:
@@ -296,8 +296,8 @@ def get_issuance(issuance_id: int, db: Session = Depends(get_db)):
 
 
 # Additional routers for contractor and material history
-contractor_router = APIRouter(prefix="/api/v1/contractors", tags=["contractors"])
-material_router = APIRouter(prefix="/api/v1/materials", tags=["materials"])
+contractor_router = APIRouter(prefix="/api/contractors", tags=["contractors"])
+material_router = APIRouter(prefix="/api/materials", tags=["materials"])
 
 
 @contractor_router.get("/{contractor_id}/issuance-history", response_model=IssuanceListResponse)

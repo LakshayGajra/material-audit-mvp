@@ -28,7 +28,7 @@ from app.services.unit_conversion_service import convert_quantity, get_conversio
 
 logger = logging.getLogger(__name__)
 
-router = APIRouter(prefix="/api/v1/rejections", tags=["rejections"])
+router = APIRouter(prefix="/api/rejections", tags=["rejections"])
 
 
 def build_rejection_response(rejection: MaterialRejection) -> RejectionResponse:

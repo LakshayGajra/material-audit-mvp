@@ -50,12 +50,12 @@ def setup_test_data():
         "location": "Test Location",
         "is_active": True,
     }
-    resp = requests.post(f"{BASE_URL}/api/v1/warehouses", json=warehouse_data)
+    resp = requests.post(f"{BASE_URL}/api/warehouses", json=warehouse_data)
     if resp.status_code == 201:
         warehouse = resp.json()
         log_success(f"Created warehouse: {warehouse['code']} (ID: {warehouse['id']})")
     elif resp.status_code == 400 and "already exists" in resp.text:
-        resp = requests.get(f"{BASE_URL}/api/v1/warehouses")
+        resp = requests.get(f"{BASE_URL}/api/warehouses")
         warehouses = resp.json()
         warehouse = next((w for w in warehouses if w["code"] == "WH-ISSUANCE-TEST"), None)
         log(f"Warehouse exists: {warehouse['code']} (ID: {warehouse['id']})")
@@ -121,7 +121,7 @@ def setup_test_data():
         "to_unit": "kg",
         "conversion_factor": 1000
     }
-    resp = requests.post(f"{BASE_URL}/api/v1/unit-conversions", json=conversion_data)
+    resp = requests.post(f"{BASE_URL}/api/unit-conversions", json=conversion_data)
     if resp.status_code == 201:
         log_success("Created unit conversion: tons -> kg (factor: 1000)")
     elif resp.status_code == 400 and "already exists" in resp.text:
@@ -141,20 +141,20 @@ def setup_test_data():
             "reorder_quantity": 500
         }
         resp = requests.post(
-            f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory",
+            f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory",
             json=inv_data
         )
         if resp.status_code == 201:
             log_success(f"Added {qty} {unit} of {material['code']} to warehouse")
         elif resp.status_code == 400 and "already exists" in resp.text:
             # Update existing inventory
-            resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory")
+            resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory")
             inventory = resp.json()
             inv_item = next((i for i in inventory if i["material_id"] == material["id"]), None)
             if inv_item:
                 update_data = {"current_quantity": qty}
                 resp = requests.put(
-                    f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory/{inv_item['id']}",
+                    f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory/{inv_item['id']}",
                     json=update_data
                 )
                 if resp.status_code == 200:
@@ -173,7 +173,7 @@ def setup_test_data():
 
 def get_warehouse_inventory(warehouse_id, material_id):
     """Get current warehouse inventory for a material."""
-    resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse_id}/inventory")
+    resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse_id}/inventory")
     if resp.status_code == 200:
         inventory = resp.json()
         return next((i for i in inventory if i["material_id"] == material_id), None)
@@ -213,7 +213,7 @@ def test_basic_issuance(test_data):
         "notes": "Test basic issuance"
     }
 
-    resp = requests.post(f"{BASE_URL}/api/v1/issuances", json=issuance_data)
+    resp = requests.post(f"{BASE_URL}/api/issuances", json=issuance_data)
     if resp.status_code != 201:
         log_error(f"Issuance failed: {resp.text}")
         return False
@@ -242,7 +242,7 @@ def test_basic_issuance(test_data):
         return False
 
     # Verify transaction logged
-    resp = requests.get(f"{BASE_URL}/api/v1/issuances/{issuance['id']}")
+    resp = requests.get(f"{BASE_URL}/api/issuances/{issuance['id']}")
     if resp.status_code == 200:
         log_success("Issuance transaction logged and retrievable")
     else:
@@ -277,7 +277,7 @@ def test_unit_conversion(test_data):
         "notes": "Test unit conversion issuance"
     }
 
-    resp = requests.post(f"{BASE_URL}/api/v1/issuances", json=issuance_data)
+    resp = requests.post(f"{BASE_URL}/api/issuances", json=issuance_data)
     if resp.status_code != 201:
         log_error(f"Issuance failed: {resp.text}")
         return False
@@ -333,7 +333,7 @@ def test_insufficient_stock(test_data):
         "notes": "Test insufficient stock"
     }
 
-    resp = requests.post(f"{BASE_URL}/api/v1/issuances", json=issuance_data)
+    resp = requests.post(f"{BASE_URL}/api/issuances", json=issuance_data)
 
     if resp.status_code == 400 and "Insufficient" in resp.text:
         log_success(f"Correctly rejected: {resp.json()['detail']}")
@@ -352,7 +352,7 @@ def test_insufficient_stock(test_data):
         return False
 
     # Verify no transaction logged for XYZ
-    resp = requests.get(f"{BASE_URL}/api/v1/contractors/{xyz_contractor['id']}/issuance-history")
+    resp = requests.get(f"{BASE_URL}/api/contractors/{xyz_contractor['id']}/issuance-history")
     if resp.status_code == 200:
         history = resp.json()
         # Check if there's any issuance with 5000kg
@@ -376,13 +376,13 @@ def test_race_condition(test_data):
     steel = test_data["materials"][0]
 
     # Reset warehouse inventory to 4000kg for this test
-    resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory")
+    resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory")
     inventory = resp.json()
     steel_inv = next((i for i in inventory if i["material_id"] == steel["id"]), None)
     if steel_inv:
         update_data = {"current_quantity": 4000}
         resp = requests.put(
-            f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory/{steel_inv['id']}",
+            f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory/{steel_inv['id']}",
             json=update_data
         )
         if resp.status_code == 200:
@@ -408,7 +408,7 @@ def test_race_condition(test_data):
             "notes": f"Race condition test for {contractor['name']}"
         }
 
-        resp = requests.post(f"{BASE_URL}/api/v1/issuances", json=issuance_data)
+        resp = requests.post(f"{BASE_URL}/api/issuances", json=issuance_data)
         if resp.status_code == 201:
             results["success"] += 1
             log(f"  Thread {contractor['code']}: SUCCESS")

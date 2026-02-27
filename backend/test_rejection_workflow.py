@@ -46,12 +46,12 @@ def setup_test_data():
         "location": "Test Location",
         "is_active": True,
     }
-    resp = requests.post(f"{BASE_URL}/api/v1/warehouses", json=warehouse_data)
+    resp = requests.post(f"{BASE_URL}/api/warehouses", json=warehouse_data)
     if resp.status_code == 201:
         warehouse = resp.json()
         log_success(f"Created warehouse: {warehouse['code']} (ID: {warehouse['id']})")
     elif resp.status_code == 400 and "already exists" in resp.text:
-        resp = requests.get(f"{BASE_URL}/api/v1/warehouses")
+        resp = requests.get(f"{BASE_URL}/api/warehouses")
         warehouses = resp.json()
         warehouse = next((w for w in warehouses if w["code"] == "WH-REJ-TEST"), None)
         log(f"Warehouse exists: {warehouse['code']} (ID: {warehouse['id']})")
@@ -104,7 +104,7 @@ def setup_test_data():
     }
 
     # Check if inventory exists
-    resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory")
+    resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory")
     inventory = resp.json()
     existing_inv = next((i for i in inventory if i["material_id"] == material["id"]), None)
 
@@ -112,14 +112,14 @@ def setup_test_data():
         # Update to reset
         update_data = {"current_quantity": 5000}
         resp = requests.put(
-            f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory/{existing_inv['id']}",
+            f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory/{existing_inv['id']}",
             json=update_data
         )
         if resp.status_code == 200:
             log(f"Reset warehouse inventory to 5000 kg")
     else:
         resp = requests.post(
-            f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory",
+            f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory",
             json=inv_data
         )
         if resp.status_code == 201:
@@ -139,7 +139,7 @@ def setup_test_data():
         "notes": "Initial issuance for rejection test"
     }
 
-    resp = requests.post(f"{BASE_URL}/api/v1/issuances", json=issuance_data)
+    resp = requests.post(f"{BASE_URL}/api/issuances", json=issuance_data)
     if resp.status_code == 201:
         issuance = resp.json()
         log_success(f"Issued 1000 kg to contractor: {issuance['issuance_number']}")
@@ -149,7 +149,7 @@ def setup_test_data():
         log_error(f"Failed to issue material: {resp.text}")
 
     # Verify setup
-    resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse['id']}/inventory")
+    resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse['id']}/inventory")
     inventory = resp.json()
     wh_inv = next((i for i in inventory if i["material_id"] == material["id"]), None)
     if wh_inv:
@@ -170,7 +170,7 @@ def setup_test_data():
 
 def get_warehouse_inventory(warehouse_id, material_id):
     """Get current warehouse inventory for a material."""
-    resp = requests.get(f"{BASE_URL}/api/v1/warehouses/{warehouse_id}/inventory")
+    resp = requests.get(f"{BASE_URL}/api/warehouses/{warehouse_id}/inventory")
     if resp.status_code == 200:
         inventory = resp.json()
         return next((i for i in inventory if i["material_id"] == material_id), None)
@@ -218,7 +218,7 @@ def test_rejection_workflow(test_data):
         "notes": "Found during quality inspection"
     }
 
-    resp = requests.post(f"{BASE_URL}/api/v1/rejections/report", json=rejection_data)
+    resp = requests.post(f"{BASE_URL}/api/rejections/report", json=rejection_data)
     if resp.status_code != 201:
         log_error(f"Failed to report rejection: {resp.text}")
         return False
@@ -268,7 +268,7 @@ def test_rejection_workflow(test_data):
         "notes": "Approved based on photo evidence"
     }
 
-    resp = requests.put(f"{BASE_URL}/api/v1/rejections/{rejection_id}/approve", json=approval_data)
+    resp = requests.put(f"{BASE_URL}/api/rejections/{rejection_id}/approve", json=approval_data)
     if resp.status_code != 200:
         log_error(f"Failed to approve rejection: {resp.text}")
         return False
@@ -316,7 +316,7 @@ def test_rejection_workflow(test_data):
         "notes": "Material received and inspected, confirmed rust damage"
     }
 
-    resp = requests.put(f"{BASE_URL}/api/v1/rejections/{rejection_id}/receive", json=receive_data)
+    resp = requests.put(f"{BASE_URL}/api/rejections/{rejection_id}/receive", json=receive_data)
     if resp.status_code != 200:
         log_error(f"Failed to receive rejection: {resp.text}")
         return False

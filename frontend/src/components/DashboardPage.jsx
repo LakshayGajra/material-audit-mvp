@@ -25,7 +25,6 @@ import {
   Error as ErrorIcon,
   Add as AddIcon,
   PlayArrow as StartIcon,
-  Receipt as ReceiptIcon,
   TrendingUp as TrendIcon,
 } from '@mui/icons-material';
 import {
@@ -196,16 +195,15 @@ export default function DashboardPage({ onNavigate }) {
             <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <Box>
                 <Typography variant="h4">
-                  {(summary?.audits?.pending_analysis || 0) +
-                    (summary?.reconciliations?.pending_review || 0)}
+                  {(summary?.inventory_checks?.pending_review || 0)}
                 </Typography>
                 <Typography variant="body2">Pending Reviews</Typography>
               </Box>
               <AssessmentIcon sx={{ fontSize: 48, opacity: 0.7 }} />
             </Box>
             <Box sx={{ mt: 1, display: 'flex', gap: 0.5 }}>
-              <Chip label={`${summary?.audits?.pending_analysis || 0} Audits`} size="small" />
-              <Chip label={`${summary?.reconciliations?.pending_review || 0} Recon`} size="small" />
+              <Chip label={`${summary?.inventory_checks?.in_progress || 0} In Progress`} size="small" />
+              <Chip label={`${summary?.inventory_checks?.pending_review || 0} Review`} size="small" />
             </Box>
           </CardContent>
         </Card>
@@ -227,26 +225,18 @@ export default function DashboardPage({ onNavigate }) {
             <Button
               variant="outlined"
               startIcon={<StartIcon />}
-              onClick={() => onNavigate?.({ module: 'audits', subPage: 'audits' })}
+              onClick={() => onNavigate?.({ module: 'verification', subPage: 'inventory-checks' })}
               fullWidth
             >
-              Start Audit
+              Start Inventory Check
             </Button>
             <Button
               variant="outlined"
               startIcon={<AddIcon />}
-              onClick={() => onNavigate?.({ module: 'inventory', subPage: 'pos' })}
+              onClick={() => onNavigate?.({ module: 'procurement', subPage: 'pos' })}
               fullWidth
             >
               Create Purchase Order
-            </Button>
-            <Button
-              variant="outlined"
-              startIcon={<ReceiptIcon />}
-              onClick={() => onNavigate?.({ module: 'audits', subPage: 'reconciliation' })}
-              fullWidth
-            >
-              Submit Reconciliation
             </Button>
           </Box>
         </Paper>
@@ -336,8 +326,8 @@ export default function DashboardPage({ onNavigate }) {
             <Divider component="li" />
             <ListItem>
               <ListItemText
-                primary="Audits In Progress"
-                secondary={`${summary?.audits?.in_progress || 0}`}
+                primary="Checks In Progress"
+                secondary={`${summary?.inventory_checks?.in_progress || 0}`}
               />
             </ListItem>
             <Divider component="li" />
