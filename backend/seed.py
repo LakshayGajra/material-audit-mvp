@@ -18,7 +18,9 @@ from app.models import (
     UnitConversion,
     VarianceThreshold,
     ContractorInventory,
+    User,
 )
+from app.core.security import hash_password
 
 
 def seed_materials(db):
@@ -563,6 +565,55 @@ def seed_contractor_inventory(db):
     print(f"  Created {created} contractor inventory items\n")
 
 
+def seed_users(db):
+    """Seed default users."""
+    print("Seeding users...")
+
+    # Get first contractor for contractor user
+    contractor = db.query(Contractor).filter(Contractor.code == "CON001").first()
+
+    users = [
+        {
+            "username": "admin",
+            "email": "admin@materialaudit.local",
+            "password": "admin123",
+            "role": "admin",
+            "contractor_id": None,
+        },
+        {
+            "username": "contractor1",
+            "email": "contractor1@materialaudit.local",
+            "password": "contractor123",
+            "role": "contractor",
+            "contractor_id": contractor.id if contractor else None,
+        },
+        {
+            "username": "auditor1",
+            "email": "auditor1@materialaudit.local",
+            "password": "auditor123",
+            "role": "auditor",
+            "contractor_id": None,
+        },
+    ]
+
+    created = 0
+    for u in users:
+        existing = db.query(User).filter(User.username == u["username"]).first()
+        if not existing:
+            db.add(User(
+                username=u["username"],
+                email=u["email"],
+                password_hash=hash_password(u["password"]),
+                role=u["role"],
+                contractor_id=u["contractor_id"],
+            ))
+            created += 1
+            print(f"  Added: {u['username']} ({u['role']})")
+        else:
+            print(f"  Skipped (exists): {u['username']}")
+    print(f"  Created {created} users\n")
+
+
 def main():
     """Main seed function."""
     print("=" * 60)
@@ -588,6 +639,7 @@ def main():
         seed_warehouse_inventory(db)
         seed_bom(db)
         seed_contractor_inventory(db)
+        seed_users(db)
 
         # Final commit
         db.commit()

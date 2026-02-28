@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
-import { CssBaseline, ThemeProvider, Grid } from '@mui/material';
+import { CssBaseline, ThemeProvider, Grid, CircularProgress, Box } from '@mui/material';
 import { getContractors, getMaterials, getFinishedGoods } from './api';
 import theme from './theme';
 import { Layout } from './components/layout';
+import { useAuth } from './contexts/AuthContext';
+import LoginPage from './components/LoginPage';
 
 // Page components
 import DashboardPage from './components/DashboardPage';
@@ -25,7 +27,14 @@ import ContractorsPage from './components/ContractorsPage';
 import StockTransferPage from './components/StockTransferPage';
 import LearnPage from './components/LearnPage';
 
+// Role-based dashboards
+import ContractorDashboard from './components/ContractorDashboard';
+import AuditorDashboard from './components/AuditorDashboard';
+import AdminDashboard from './components/AdminDashboard';
+
 function App() {
+  const { user, loading, logout } = useAuth();
+
   // Navigation state
   const [activeModule, setActiveModule] = useState('dashboard');
   const [activeSubPage, setActiveSubPage] = useState(null);
@@ -93,8 +102,17 @@ function App() {
 
   // Render the current page based on navigation state
   const renderContent = () => {
-    // Dashboard
+    // Dashboard - role-based
     if (activeModule === 'dashboard') {
+      if (user?.role === 'contractor') {
+        return <ContractorDashboard user={user} onNavigate={handleNavigate} />;
+      }
+      if (user?.role === 'auditor') {
+        return <AuditorDashboard user={user} onNavigate={handleNavigate} />;
+      }
+      if (user?.role === 'admin') {
+        return <AdminDashboard onNavigate={handleNavigate} />;
+      }
       return <DashboardPage onNavigate={handleNavigate} />;
     }
 
@@ -132,6 +150,11 @@ function App() {
 
     // Contractor Operations module
     if (activeModule === 'contractor') {
+      // Contractor role: handle my-inventory subpage
+      if (user?.role === 'contractor' && (activeSubPage === 'my-inventory' || activeSubPage === 'stock')) {
+        return <ContractorDashboard user={user} onNavigate={handleNavigate} initialTab={0} />;
+      }
+
       switch (activeSubPage) {
         case 'stock':
         default:
@@ -158,6 +181,7 @@ function App() {
               contractors={contractors}
               materials={materials}
               refreshKey={refreshKey}
+              contractorId={user?.role === 'contractor' ? user.contractor_id : null}
             />
           );
         case 'fgr':
@@ -245,6 +269,26 @@ function App() {
     return <DashboardPage onNavigate={handleNavigate} />;
   };
 
+  if (loading) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
+    );
+  }
+
+  if (!user) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <LoginPage />
+      </ThemeProvider>
+    );
+  }
+
   return (
     <ThemeProvider theme={theme}>
       <CssBaseline />
@@ -252,6 +296,8 @@ function App() {
         activeModule={activeModule}
         activeSubPage={activeSubPage}
         onNavigate={handleNavigate}
+        user={user}
+        onLogout={logout}
       >
         {renderContent()}
       </Layout>

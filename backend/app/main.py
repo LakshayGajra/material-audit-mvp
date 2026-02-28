@@ -1,8 +1,8 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api import contractors, materials, production, finished_goods, bom, anomalies
-from app.api.v1 import warehouses, suppliers, purchase_orders, goods_receipts, unit_conversions, issuances, rejections, thresholds, dashboard, reports, finished_goods_receipts, inventory_checks, stock_transfers
+from app.api import contractors, materials, production, finished_goods, bom, anomalies, auth
+from app.api.v1 import warehouses, suppliers, purchase_orders, goods_receipts, unit_conversions, issuances, rejections, thresholds, dashboard, reports, finished_goods_receipts, inventory_checks, stock_transfers, contractor_portal
 
 app = FastAPI(title="Material Audit MVP")
 
@@ -20,6 +20,7 @@ app.include_router(production.router)
 app.include_router(finished_goods.router)
 app.include_router(bom.router)
 app.include_router(anomalies.router)
+app.include_router(auth.router)
 
 # V1 API routers
 app.include_router(warehouses.router)
@@ -39,6 +40,7 @@ app.include_router(finished_goods_receipts.router)
 app.include_router(finished_goods_receipts.fg_inventory_router)
 app.include_router(inventory_checks.router)
 app.include_router(stock_transfers.router)
+app.include_router(contractor_portal.router)
 
 
 @app.get("/")

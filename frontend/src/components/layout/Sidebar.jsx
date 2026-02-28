@@ -9,15 +9,12 @@ import {
   Collapse,
   Typography,
   Divider,
-  FormControl,
-  Select,
-  MenuItem,
   Chip,
+  Avatar,
 } from '@mui/material';
 import {
   Dashboard as DashboardIcon,
   Inventory as InventoryIcon,
-  Assignment as AssignmentIcon,
   Settings as SettingsIcon,
   ExpandLess,
   ExpandMore,
@@ -38,41 +35,31 @@ import {
   ShoppingCart as ProcurementIcon,
   Engineering as OpsIcon,
   VerifiedUser as VerifyIcon,
-  AdminPanelSettings as AdminIcon,
-  Visibility as ViewIcon,
   SwapHoriz as TransferIcon,
+  AccountBox as MyInventoryIcon,
 } from '@mui/icons-material';
 
 const SIDEBAR_WIDTH = 260;
 
-// View modes for testing different user perspectives
-const VIEW_MODES = {
-  all: {
-    label: 'All Views',
-    description: 'Full access to all features',
-    color: 'default',
-  },
-  warehouse: {
-    label: 'Warehouse',
-    description: 'Warehouse & procurement operations',
-    color: 'info',
-  },
-  contractor: {
-    label: 'Contractor Ops',
-    description: 'Contractor material management',
-    color: 'success',
-  },
-  auditor: {
-    label: 'Auditor',
-    description: 'Inventory verification',
-    color: 'warning',
-  },
-  admin: {
-    label: 'Admin',
-    description: 'System configuration',
-    color: 'error',
-  },
+const ROLE_COLORS = {
+  admin: 'error',
+  contractor: 'success',
+  auditor: 'warning',
 };
+
+// Map user role to view filter key
+function roleToView(role) {
+  switch (role) {
+    case 'admin':
+      return 'admin';
+    case 'contractor':
+      return 'contractor';
+    case 'auditor':
+      return 'auditor';
+    default:
+      return 'all';
+  }
+}
 
 // Full navigation configuration with view mode visibility
 const fullNavigationConfig = [
@@ -88,8 +75,8 @@ const fullNavigationConfig = [
     icon: ProcurementIcon,
     views: ['all', 'warehouse', 'admin'],
     children: [
-      { id: 'pos', label: 'Purchase Orders', icon: POIcon },
-      { id: 'suppliers', label: 'Suppliers', icon: SupplierIcon },
+      { id: 'pos', label: 'Purchase Orders', icon: POIcon, views: ['all', 'warehouse', 'admin'] },
+      { id: 'suppliers', label: 'Suppliers', icon: SupplierIcon, views: ['all', 'warehouse', 'admin'] },
     ],
   },
   {
@@ -98,8 +85,8 @@ const fullNavigationConfig = [
     icon: WarehouseIcon,
     views: ['all', 'warehouse', 'admin'],
     children: [
-      { id: 'warehouses', label: 'Inventory', icon: InventoryIcon },
-      { id: 'transfers', label: 'Stock Transfers', icon: TransferIcon },
+      { id: 'warehouses', label: 'Inventory', icon: InventoryIcon, views: ['all', 'warehouse', 'admin'] },
+      { id: 'transfers', label: 'Stock Transfers', icon: TransferIcon, views: ['all', 'warehouse', 'admin'] },
     ],
   },
   {
@@ -108,9 +95,10 @@ const fullNavigationConfig = [
     icon: OpsIcon,
     views: ['all', 'contractor', 'admin'],
     children: [
-      { id: 'stock', label: 'Issue Materials', icon: StockIcon },
-      { id: 'rejections', label: 'Rejections', icon: RejectIcon },
-      { id: 'fgr', label: 'Receive FG', icon: FGRIcon },
+      { id: 'stock', label: 'Issue Materials', icon: StockIcon, views: ['all', 'admin'] },
+      { id: 'my-inventory', label: 'My Inventory', icon: MyInventoryIcon, views: ['contractor'] },
+      { id: 'rejections', label: 'Rejections', icon: RejectIcon, views: ['all', 'contractor', 'admin'] },
+      { id: 'fgr', label: 'Receive FG', icon: FGRIcon, views: ['all', 'contractor', 'admin'] },
     ],
   },
   {
@@ -119,8 +107,8 @@ const fullNavigationConfig = [
     icon: FGInventoryIcon,
     views: ['all', 'warehouse', 'contractor', 'admin'],
     children: [
-      { id: 'fginventory', label: 'FG Inventory', icon: InventoryIcon },
-      { id: 'products', label: 'Products & BOM', icon: ProductIcon },
+      { id: 'fginventory', label: 'FG Inventory', icon: InventoryIcon, views: ['all', 'warehouse', 'contractor', 'admin'] },
+      { id: 'products', label: 'Products & BOM', icon: ProductIcon, views: ['all', 'warehouse', 'contractor', 'admin'] },
     ],
   },
   {
@@ -129,8 +117,8 @@ const fullNavigationConfig = [
     icon: VerifyIcon,
     views: ['all', 'auditor', 'admin'],
     children: [
-      { id: 'inventory-checks', label: 'Inventory Checks', icon: AuditIcon },
-      { id: 'anomalies', label: 'Anomalies', icon: AnomalyIcon },
+      { id: 'inventory-checks', label: 'Inventory Checks', icon: AuditIcon, views: ['all', 'auditor', 'admin'] },
+      { id: 'anomalies', label: 'Anomalies', icon: AnomalyIcon, views: ['all', 'auditor', 'admin'] },
     ],
   },
   {
@@ -139,40 +127,59 @@ const fullNavigationConfig = [
     icon: SettingsIcon,
     views: ['all', 'admin'],
     children: [
-      { id: 'materials', label: 'Materials', icon: MaterialIcon },
-      { id: 'contractors', label: 'Contractors', icon: ContractorIcon },
-      { id: 'thresholds', label: 'Thresholds', icon: ThresholdIcon },
+      { id: 'materials', label: 'Materials', icon: MaterialIcon, views: ['all', 'admin'] },
+      { id: 'contractors', label: 'Contractors', icon: ContractorIcon, views: ['all', 'admin'] },
+      { id: 'thresholds', label: 'Thresholds', icon: ThresholdIcon, views: ['all', 'admin'] },
     ],
   },
 ];
 
-export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
-  // Load view mode from localStorage or default to 'all'
-  const [viewMode, setViewMode] = useState(() => {
-    const saved = localStorage.getItem('viewMode');
-    return saved && VIEW_MODES[saved] ? saved : 'all';
-  });
+export default function Sidebar({ activeModule, activeSubPage, onNavigate, user }) {
+  const viewMode = roleToView(user?.role);
 
   const [expanded, setExpanded] = useState(() => {
-    // Start with all sections expanded
+    // Only expand the active module by default
     const initial = {};
     fullNavigationConfig.forEach((item) => {
       if (item.children) {
-        initial[item.id] = true;
+        initial[item.id] = item.id === activeModule;
       }
     });
     return initial;
   });
 
-  // Save view mode to localStorage when it changes
+  // Auto-collapse others and expand current when activeModule changes
   useEffect(() => {
-    localStorage.setItem('viewMode', viewMode);
-  }, [viewMode]);
+    setExpanded((prev) => {
+      const next = {};
+      fullNavigationConfig.forEach((item) => {
+        if (item.children) {
+          next[item.id] = item.id === activeModule ? true : (prev[item.id] && item.id === activeModule);
+        }
+      });
+      // Always expand the active module
+      if (activeModule) {
+        next[activeModule] = true;
+      }
+      return next;
+    });
+  }, [activeModule]);
 
-  // Filter navigation based on current view mode
-  const navigationConfig = fullNavigationConfig.filter(
-    (item) => item.views.includes(viewMode)
-  );
+  // Filter navigation based on user role (parent level)
+  const navigationConfig = fullNavigationConfig
+    .filter((item) => item.views.includes(viewMode))
+    .map((item) => {
+      if (item.children) {
+        // Filter children by role too
+        const filteredChildren = item.children.filter(
+          (child) => !child.views || child.views.includes(viewMode)
+        );
+        return { ...item, children: filteredChildren };
+      }
+      return item;
+    })
+    // Remove parent items whose children were all filtered out
+    .filter((item) => !item.children || item.children.length > 0);
 
   const handleToggle = (moduleId) => {
     setExpanded((prev) => ({
@@ -190,14 +197,6 @@ export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
       return activeModule === moduleId && activeSubPage === subPageId;
     }
     return activeModule === moduleId && !activeSubPage;
-  };
-
-  const handleViewModeChange = (event) => {
-    const newMode = event.target.value;
-    setViewMode(newMode);
-
-    // Navigate to dashboard when switching views to avoid being on a hidden page
-    onNavigate({ module: 'dashboard', subPage: null });
   };
 
   return (
@@ -239,55 +238,35 @@ export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
 
       <Divider />
 
-      {/* View Mode Selector */}
-      <Box sx={{ px: 2, py: 1.5 }}>
-        <Typography
-          variant="caption"
-          sx={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 0.5,
-            color: 'text.secondary',
-            mb: 0.5,
-            fontWeight: 500,
-          }}
-        >
-          <ViewIcon sx={{ fontSize: 14 }} />
-          View Mode
-        </Typography>
-        <FormControl fullWidth size="small">
-          <Select
-            value={viewMode}
-            onChange={handleViewModeChange}
-            sx={{
-              '& .MuiSelect-select': {
-                py: 1,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 1,
-              },
-            }}
-          >
-            {Object.entries(VIEW_MODES).map(([key, config]) => (
-              <MenuItem key={key} value={key}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, width: '100%' }}>
-                  <Chip
-                    label={config.label}
-                    size="small"
-                    color={config.color}
-                    sx={{ minWidth: 90 }}
-                  />
-                  <Typography variant="caption" color="text.secondary" sx={{ fontSize: '0.7rem' }}>
-                    {config.description}
-                  </Typography>
-                </Box>
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
-      </Box>
-
-      <Divider />
+      {/* User Info */}
+      {user && (
+        <>
+          <Box sx={{ px: 2, py: 1.5, display: 'flex', alignItems: 'center', gap: 1.5 }}>
+            <Avatar
+              sx={{
+                width: 32,
+                height: 32,
+                fontSize: '0.875rem',
+                bgcolor: `${ROLE_COLORS[user.role] || 'default'}.main`,
+              }}
+            >
+              {user.username[0].toUpperCase()}
+            </Avatar>
+            <Box sx={{ minWidth: 0 }}>
+              <Typography variant="body2" fontWeight={600} noWrap>
+                {user.username}
+              </Typography>
+              <Chip
+                label={user.role}
+                size="small"
+                color={ROLE_COLORS[user.role] || 'default'}
+                sx={{ height: 20, fontSize: '0.7rem' }}
+              />
+            </Box>
+          </Box>
+          <Divider />
+        </>
+      )}
 
       {/* Navigation */}
       <List component="nav" sx={{ px: 1, py: 1, flexGrow: 1, overflow: 'auto' }}>
@@ -303,7 +282,6 @@ export default function Sidebar({ activeModule, activeSubPage, onNavigate }) {
                 onClick={() => {
                   if (hasChildren) {
                     handleToggle(item.id);
-                    // Navigate to first child if not already in this module
                     if (activeModule !== item.id) {
                       handleNavClick(item.id, item.children[0].id);
                     }

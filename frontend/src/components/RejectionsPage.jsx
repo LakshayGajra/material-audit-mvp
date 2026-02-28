@@ -25,6 +25,7 @@ import {
   IconButton,
   Tabs,
   Tab,
+  Popover,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -32,6 +33,7 @@ import {
   Check as CheckIcon,
   Close as CloseIcon,
   LocalShipping as ReceiveIcon,
+  CheckCircle as QuickApproveIcon,
 } from '@mui/icons-material';
 import {
   getRejections,
@@ -85,6 +87,11 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
     received_by: '',
     notes: '',
   });
+
+  // Quick approve popover
+  const [quickApproveAnchor, setQuickApproveAnchor] = useState(null);
+  const [quickApproveRejId, setQuickApproveRejId] = useState(null);
+  const [quickApproveWarehouse, setQuickApproveWarehouse] = useState('');
 
   useEffect(() => {
     loadRejections();
@@ -198,6 +205,23 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
     }
   };
 
+  const handleQuickApprove = async () => {
+    if (!quickApproveRejId || !quickApproveWarehouse) return;
+    try {
+      await approveRejection(quickApproveRejId, {
+        approved_by: 'Manager',
+        return_warehouse_id: parseInt(quickApproveWarehouse),
+      });
+      setSuccess('Rejection approved');
+      setQuickApproveAnchor(null);
+      setQuickApproveRejId(null);
+      setQuickApproveWarehouse('');
+      loadRejections();
+    } catch (err) {
+      setError(getErrorMessage(err, 'Failed to approve rejection'));
+    }
+  };
+
   return (
     <Grid container spacing={3}>
       {error && (
@@ -308,6 +332,20 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
                         <IconButton size="small" onClick={() => handleViewRejection(rej.id)} title="View">
                           <ViewIcon />
                         </IconButton>
+                        {rej.status === 'REPORTED' && (
+                          <IconButton
+                            size="small"
+                            color="success"
+                            title="Quick Approve"
+                            onClick={(e) => {
+                              setQuickApproveAnchor(e.currentTarget);
+                              setQuickApproveRejId(rej.id);
+                              setQuickApproveWarehouse('');
+                            }}
+                          >
+                            <QuickApproveIcon />
+                          </IconButton>
+                        )}
                       </TableCell>
                     </TableRow>
                   ))
@@ -317,6 +355,44 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
           </TableContainer>
         </Paper>
       </Grid>
+
+      {/* Quick Approve Popover */}
+      <Popover
+        open={Boolean(quickApproveAnchor)}
+        anchorEl={quickApproveAnchor}
+        onClose={() => {
+          setQuickApproveAnchor(null);
+          setQuickApproveRejId(null);
+          setQuickApproveWarehouse('');
+        }}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'left' }}
+      >
+        <Box sx={{ p: 2, width: 280 }}>
+          <Typography variant="subtitle2" gutterBottom>Quick Approve</Typography>
+          <FormControl fullWidth size="small" sx={{ mb: 1.5 }}>
+            <InputLabel>Return Warehouse</InputLabel>
+            <Select
+              value={quickApproveWarehouse}
+              label="Return Warehouse"
+              onChange={(e) => setQuickApproveWarehouse(e.target.value)}
+            >
+              {warehouses.map((w) => (
+                <MenuItem key={w.id} value={w.id}>{w.code} - {w.name}</MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+          <Button
+            variant="contained"
+            color="success"
+            size="small"
+            fullWidth
+            disabled={!quickApproveWarehouse}
+            onClick={handleQuickApprove}
+          >
+            Confirm
+          </Button>
+        </Box>
+      </Popover>
 
       {/* Create Rejection Dialog */}
       <Dialog open={createDialog} onClose={() => setCreateDialog(false)} maxWidth="sm" fullWidth>

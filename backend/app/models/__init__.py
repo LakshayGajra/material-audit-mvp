@@ -31,6 +31,7 @@ from app.models.stock_transfer import (
     StockTransfer,
     StockTransferLine,
 )
+from app.models.user import User
 
 __all__ = [
     "Material",
@@ -60,4 +61,5 @@ __all__ = [
     "InventoryCheckLine",
     "StockTransfer",
     "StockTransferLine",
+    "User",
 ]

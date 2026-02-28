@@ -175,6 +175,7 @@ def list_inventory_checks(
     contractor_id: Optional[int] = Query(None),
     check_type: Optional[str] = Query(None),
     status: Optional[str] = Query(None),
+    initiated_by: Optional[str] = Query(None),
     date_from: Optional[date] = Query(None),
     date_to: Optional[date] = Query(None),
     db: Session = Depends(get_db),
@@ -188,6 +189,8 @@ def list_inventory_checks(
         query = query.filter(InventoryCheck.check_type == check_type)
     if status:
         query = query.filter(InventoryCheck.status == status)
+    if initiated_by:
+        query = query.filter(InventoryCheck.initiated_by == initiated_by)
     if date_from:
         query = query.filter(InventoryCheck.check_date >= date_from)
     if date_to:

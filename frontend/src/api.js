@@ -4,6 +4,26 @@ const api = axios.create({
   baseURL: '/api',
 });
 
+// Attach auth token to every request
+api.interceptors.request.use((config) => {
+  const token = localStorage.getItem('token');
+  if (token) {
+    config.headers.Authorization = `Bearer ${token}`;
+  }
+  return config;
+});
+
+// Clear token on 401
+api.interceptors.response.use(
+  (response) => response,
+  (error) => {
+    if (error.response?.status === 401) {
+      localStorage.removeItem('token');
+    }
+    return Promise.reject(error);
+  }
+);
+
 // Helper to extract error message from API responses
 // Handles FastAPI validation errors (array of objects) and string errors
 export const getErrorMessage = (err, fallback = 'An error occurred') => {
@@ -150,6 +170,12 @@ export const enterCounts = (id, data) => api.put(`/inventory-checks/${id}/counts
 export const saveCountsDraft = (id, data) => api.post(`/inventory-checks/${id}/save-counts`, data);
 export const resolveInventoryCheck = (id, data) => api.put(`/inventory-checks/${id}/resolve`, data);
 
+// Contractor Portal
+export const getContractorInventorySummary = (contractorId) =>
+  api.get(`/contractor-portal/${contractorId}/inventory-summary`);
+export const getContractorRankings = () =>
+  api.get('/contractor-portal/auditor/contractor-rankings');
+
 // Stock Transfers
 export const getStockTransfers = (params) => api.get('/stock-transfers', { params });
 export const createStockTransfer = (data) => api.post('/stock-transfers', data);
@@ -157,5 +183,10 @@ export const getStockTransfer = (id) => api.get(`/stock-transfers/${id}`);
 export const submitStockTransfer = (id) => api.post(`/stock-transfers/${id}/submit`);
 export const completeStockTransfer = (id, data) => api.post(`/stock-transfers/${id}/complete`, data);
 export const cancelStockTransfer = (id) => api.post(`/stock-transfers/${id}/cancel`);
+
+// Auth
+export const loginUser = (data) => api.post('/auth/login', data);
+export const registerUser = (data) => api.post('/auth/register', data);
+export const getCurrentUser = () => api.get('/auth/me');
 
 export default api;

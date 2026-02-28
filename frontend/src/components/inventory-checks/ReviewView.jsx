@@ -1,3 +1,4 @@
+import { useMemo } from 'react';
 import {
   Paper,
   Typography,
@@ -19,6 +20,7 @@ import {
 import {
   Check as CheckIcon,
   Warning as WarningIcon,
+  DoneAll as AcceptAllIcon,
 } from '@mui/icons-material';
 
 const STATUS_COLORS = {
@@ -35,6 +37,15 @@ const STATUS_LABELS = {
   resolved: 'Resolved',
 };
 
+function getRowColor(variancePercent) {
+  const abs = Math.abs(variancePercent);
+  if (abs > 20) return 'rgba(211, 47, 47, 0.12)';   // red
+  if (abs > 10) return 'rgba(245, 124, 0, 0.12)';   // orange
+  if (abs > 5) return 'rgba(251, 192, 45, 0.12)';    // yellow
+  if (abs > 2) return 'rgba(56, 142, 60, 0.08)';     // light green
+  return 'inherit';
+}
+
 export default function ReviewView({
   checks,
   reviewCheck,
@@ -46,7 +57,35 @@ export default function ReviewView({
   loading,
   getVarianceColor,
 }) {
+  // Auto-sort lines by abs(variance_percent) descending
+  const sortedLines = useMemo(() => {
+    if (!reviewCheck?.lines) return [];
+    return [...reviewCheck.lines].sort((a, b) => {
+      const aVar = Math.abs(parseFloat(a.variance_percent) || 0);
+      const bVar = Math.abs(parseFloat(b.variance_percent) || 0);
+      return bVar - aVar;
+    });
+  }, [reviewCheck?.lines]);
+
+  const handleAcceptAllMatching = () => {
+    const updated = { ...resolutions };
+    for (const line of sortedLines) {
+      const absVar = Math.abs(parseFloat(line.variance_percent) || 0);
+      if (absVar <= 2) {
+        updated[line.id] = {
+          ...updated[line.id],
+          resolution: 'accept',
+        };
+      }
+    }
+    setResolutions(updated);
+  };
+
   if (reviewCheck) {
+    const matchingCount = sortedLines.filter(
+      (l) => Math.abs(parseFloat(l.variance_percent) || 0) <= 2
+    ).length;
+
     return (
       <Grid size={12}>
         <Paper sx={{ p: 3 }}>
@@ -60,11 +99,24 @@ export default function ReviewView({
                 {reviewCheck.lines_with_variance} lines with variance
               </Typography>
             </Box>
-            <Chip label={STATUS_LABELS[reviewCheck.status]} color={STATUS_COLORS[reviewCheck.status]} />
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              {matchingCount > 0 && (
+                <Button
+                  variant="outlined"
+                  size="small"
+                  startIcon={<AcceptAllIcon />}
+                  onClick={handleAcceptAllMatching}
+                >
+                  Accept All Matching ({matchingCount})
+                </Button>
+              )}
+              <Chip label={STATUS_LABELS[reviewCheck.status]} color={STATUS_COLORS[reviewCheck.status]} />
+            </Box>
           </Box>
 
           <Alert severity="info" sx={{ mb: 3 }}>
             Review each variance and decide: Accept (adjust inventory), Keep System (flag as loss), or Investigate.
+            Lines are sorted by severity. Rows are color-coded by variance level.
           </Alert>
 
           <TableContainer>
@@ -81,12 +133,12 @@ export default function ReviewView({
                 </TableRow>
               </TableHead>
               <TableBody>
-                {reviewCheck.lines.map((line) => {
-                  const hasVariance = line.variance && Math.abs(parseFloat(line.variance)) > 0.01;
+                {sortedLines.map((line) => {
+                  const variancePercent = parseFloat(line.variance_percent) || 0;
                   return (
                     <TableRow
                       key={line.id}
-                      sx={{ bgcolor: hasVariance ? 'rgba(255, 152, 0, 0.1)' : 'inherit' }}
+                      sx={{ bgcolor: getRowColor(variancePercent) }}
                     >
                       <TableCell>
                         {line.material_code} - {line.material_name}
@@ -99,8 +151,16 @@ export default function ReviewView({
                         </Typography>
                       </TableCell>
                       <TableCell align="right">
-                        <Typography color={hasVariance ? 'warning.main' : 'inherit'}>
-                          {line.variance_percent ? parseFloat(line.variance_percent).toFixed(1) : 0}%
+                        <Typography
+                          fontWeight={Math.abs(variancePercent) > 5 ? 700 : 400}
+                          color={
+                            Math.abs(variancePercent) > 20 ? 'error.main' :
+                            Math.abs(variancePercent) > 10 ? 'warning.main' :
+                            Math.abs(variancePercent) > 5 ? 'warning.dark' :
+                            'inherit'
+                          }
+                        >
+                          {variancePercent.toFixed(1)}%
                         </Typography>
                       </TableCell>
                       <TableCell>

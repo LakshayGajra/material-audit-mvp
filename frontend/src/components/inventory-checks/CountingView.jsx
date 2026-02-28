@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import {
   Paper,
   Typography,
@@ -18,7 +19,9 @@ import {
   Edit as EditIcon,
   Save as SaveIcon,
   Send as SendIcon,
+  Fullscreen as FocusIcon,
 } from '@mui/icons-material';
+import FullScreenCounting from './FullScreenCounting';
 
 const STATUS_COLORS = {
   draft: 'default',
@@ -45,6 +48,8 @@ export default function CountingView({
   handleSubmitCounts,
   loading,
 }) {
+  const [focusMode, setFocusMode] = useState(false);
+
   if (countingCheck) {
     return (
       <Grid size={12}>
@@ -60,7 +65,17 @@ export default function CountingView({
                 {countingCheck.is_blind ? ' Blind Count' : ' With Expected Values'}
               </Typography>
             </Box>
-            <Chip label={STATUS_LABELS[countingCheck.status]} color={STATUS_COLORS[countingCheck.status]} />
+            <Box sx={{ display: 'flex', gap: 1, alignItems: 'center' }}>
+              <Button
+                variant="outlined"
+                startIcon={<FocusIcon />}
+                onClick={() => setFocusMode(true)}
+                size="small"
+              >
+                Focus Mode
+              </Button>
+              <Chip label={STATUS_LABELS[countingCheck.status]} color={STATUS_COLORS[countingCheck.status]} />
+            </Box>
           </Box>
 
           {countingCheck.is_blind && (
@@ -141,6 +156,17 @@ export default function CountingView({
             </Button>
           </Box>
         </Paper>
+
+        <FullScreenCounting
+          open={focusMode}
+          onClose={() => setFocusMode(false)}
+          countingCheck={countingCheck}
+          counts={counts}
+          setCounts={setCounts}
+          handleSaveDraft={handleSaveDraft}
+          handleSubmitCounts={handleSubmitCounts}
+          loading={loading}
+        />
       </Grid>
     );
   }
