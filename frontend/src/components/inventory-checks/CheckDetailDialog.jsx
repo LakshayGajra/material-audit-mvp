@@ -15,6 +15,7 @@ import {
   DialogContent,
   DialogActions,
 } from '@mui/material';
+import WorkflowStepper from '../common/WorkflowStepper';
 
 const STATUS_COLORS = {
   draft: 'default',
@@ -50,6 +51,9 @@ export default function CheckDetailDialog({
       <DialogContent>
         {selectedCheck && (
           <Box>
+            <Box sx={{ mb: 3 }}>
+              <WorkflowStepper type="inventoryCheck" status={selectedCheck.status} />
+            </Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={3}>
                 <Typography variant="body2" color="text.secondary">Contractor</Typography>

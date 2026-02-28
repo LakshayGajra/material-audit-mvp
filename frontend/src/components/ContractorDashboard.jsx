@@ -44,12 +44,14 @@ import {
   getErrorMessage,
 } from '../api';
 import StatusTimeline from './common/StatusTimeline';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function ContractorDashboard({ user, onNavigate, initialTab = 0 }) {
   const [tab, setTab] = useState(initialTab);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
 
   // Data
   const [inventorySummary, setInventorySummary] = useState([]);

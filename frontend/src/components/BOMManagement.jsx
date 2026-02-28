@@ -20,6 +20,7 @@ import {
 } from '@mui/material';
 import DeleteIcon from '@mui/icons-material/Delete';
 import { getBOM, addBOMItem, deleteBOMItem, getErrorMessage } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function BOMManagement({ finishedGoods, materials }) {
   const [selectedFG, setSelectedFG] = useState('');
@@ -28,6 +29,7 @@ export default function BOMManagement({ finishedGoods, materials }) {
   const [quantity, setQuantity] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
 
   useEffect(() => {
     if (selectedFG) {

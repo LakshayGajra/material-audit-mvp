@@ -24,6 +24,7 @@ import {
   Close as CloseIcon,
 } from '@mui/icons-material';
 import { getMaterials, createMaterial, getErrorMessage } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 const COMMON_UNITS = [
   { value: 'kg', label: 'Kilograms (kg)' },
@@ -48,6 +49,7 @@ export default function MaterialsPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [form, setForm] = useState({
     code: '',
     name: '',
@@ -107,7 +109,6 @@ export default function MaterialsPage() {
       setSuccess('Material created successfully!');
       handleClose();
       loadMaterials();
-      setTimeout(() => setSuccess(''), 3000);
     } catch (err) {
       setError(getErrorMessage(err, 'Failed to create material'));
     } finally {

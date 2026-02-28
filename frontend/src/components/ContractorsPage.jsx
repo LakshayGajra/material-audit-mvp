@@ -32,11 +32,13 @@ import {
   CheckCircle as FinishedGoodIcon,
 } from '@mui/icons-material';
 import { getContractors, createContractor, getContractorInventory, getErrorMessage } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function ContractorsPage({ contractors = [], onContractorCreated, refreshKey }) {
   const [localContractors, setLocalContractors] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [loading, setLoading] = useState(false);
 
   // Dialog state

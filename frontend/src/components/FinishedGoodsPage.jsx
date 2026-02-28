@@ -14,6 +14,7 @@ import {
   TableRow,
 } from '@mui/material';
 import { getFinishedGoods, createFinishedGood, getErrorMessage } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function FinishedGoodsPage() {
   const [finishedGoods, setFinishedGoods] = useState([]);
@@ -21,6 +22,7 @@ export default function FinishedGoodsPage() {
   const [name, setName] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
 
   useEffect(() => {
     loadFinishedGoods();

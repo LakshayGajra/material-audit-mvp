@@ -47,6 +47,7 @@ import {
   getErrorMessage,
 } from '../api';
 import { DataTable } from './common';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function WarehousePage({ materials, refreshKey }) {
   const [warehouses, setWarehouses] = useState([]);
@@ -57,6 +58,7 @@ export default function WarehousePage({ materials, refreshKey }) {
   const [lowStockItems, setLowStockItems] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [loading, setLoading] = useState(false);
 
   // Filter state

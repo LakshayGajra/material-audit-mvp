@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useAutoDismiss from '../../hooks/useAutoDismiss';
 import {
   getInventoryChecks,
   createInventoryCheck,
@@ -17,6 +18,7 @@ export default function useInventoryChecks(refreshKey) {
   const [contractors, setContractors] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [loading, setLoading] = useState(false);
 
   // Create check state

@@ -45,6 +45,8 @@ import {
   getWarehouses,
   getErrorMessage,
 } from '../api';
+import WorkflowStepper from './common/WorkflowStepper';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 const STATUS_COLORS = {
   REPORTED: 'warning',
@@ -60,6 +62,7 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
   const [warehouses, setWarehouses] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [statusFilter, setStatusFilter] = useState('');
   const [contractorFilter, setContractorFilter] = useState('');
 
@@ -303,6 +306,7 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
                   <TableCell align="right">Quantity</TableCell>
                   <TableCell>Reason</TableCell>
                   <TableCell>Status</TableCell>
+                  <TableCell>Progress</TableCell>
                   <TableCell>Date</TableCell>
                   <TableCell>Actions</TableCell>
                 </TableRow>
@@ -310,7 +314,7 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
               <TableBody>
                 {rejections.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={8} align="center">No rejections</TableCell>
+                    <TableCell colSpan={9} align="center">No rejections</TableCell>
                   </TableRow>
                 ) : (
                   rejections.map((rej) => (
@@ -326,6 +330,9 @@ export default function RejectionsPage({ contractors, materials, refreshKey }) {
                           color={STATUS_COLORS[rej.status] || 'default'}
                           size="small"
                         />
+                      </TableCell>
+                      <TableCell>
+                        <WorkflowStepper type="rejection" status={rej.status} compact />
                       </TableCell>
                       <TableCell>{rej.rejection_date}</TableCell>
                       <TableCell>

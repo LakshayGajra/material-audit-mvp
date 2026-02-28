@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { CssBaseline, ThemeProvider, Grid, CircularProgress, Box } from '@mui/material';
+import { CssBaseline, ThemeProvider, Grid, CircularProgress, Box, Button } from '@mui/material';
 import { getContractors, getMaterials, getFinishedGoods } from './api';
 import theme from './theme';
 import { Layout } from './components/layout';
@@ -26,6 +26,7 @@ import MaterialsPage from './components/MaterialsPage';
 import ContractorsPage from './components/ContractorsPage';
 import StockTransferPage from './components/StockTransferPage';
 import LearnPage from './components/LearnPage';
+import BulkIssueDialog from './components/BulkIssueDialog';
 
 // Role-based dashboards
 import ContractorDashboard from './components/ContractorDashboard';
@@ -44,6 +45,7 @@ function App() {
   const [materials, setMaterials] = useState([]);
   const [finishedGoods, setFinishedGoods] = useState([]);
   const [refreshKey, setRefreshKey] = useState(0);
+  const [bulkIssueDialog, setBulkIssueDialog] = useState(false);
 
   useEffect(() => {
     loadContractors();
@@ -159,21 +161,41 @@ function App() {
         case 'stock':
         default:
           return (
-            <Grid container spacing={3}>
-              <Grid size={{ xs: 12, md: 4 }}>
-                <IssueMaterialForm
-                  contractors={contractors}
-                  materials={materials}
-                  onSuccess={handleRefresh}
-                />
+            <>
+              <Grid container spacing={3}>
+                <Grid size={{ xs: 12 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: -1 }}>
+                    <Button
+                      variant="outlined"
+                      size="small"
+                      onClick={() => setBulkIssueDialog(true)}
+                    >
+                      Bulk Issue
+                    </Button>
+                  </Box>
+                </Grid>
+                <Grid size={{ xs: 12, md: 4 }}>
+                  <IssueMaterialForm
+                    contractors={contractors}
+                    materials={materials}
+                    onSuccess={handleRefresh}
+                  />
+                </Grid>
+                <Grid size={{ xs: 12, md: 8 }}>
+                  <ContractorInventory
+                    contractors={contractors}
+                    refreshKey={refreshKey}
+                  />
+                </Grid>
               </Grid>
-              <Grid size={{ xs: 12, md: 8 }}>
-                <ContractorInventory
-                  contractors={contractors}
-                  refreshKey={refreshKey}
-                />
-              </Grid>
-            </Grid>
+              <BulkIssueDialog
+                open={bulkIssueDialog}
+                onClose={() => setBulkIssueDialog(false)}
+                contractors={contractors}
+                materials={materials}
+                onSuccess={handleRefresh}
+              />
+            </>
           );
         case 'rejections':
           return (

@@ -51,6 +51,7 @@ import {
   getErrorMessage,
 } from '../api';
 import { DataTable } from './common';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 const STATUS_COLORS = {
   draft: 'default',
@@ -68,6 +69,7 @@ export default function FinishedGoodsReceiptPage({ refreshKey }) {
   const [pendingDeliveries, setPendingDeliveries] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [statusFilter, setStatusFilter] = useState('');
   const [subTab, setSubTab] = useState(0);
 

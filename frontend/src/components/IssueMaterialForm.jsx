@@ -18,6 +18,7 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import LocalShippingIcon from '@mui/icons-material/LocalShipping';
 import { createIssuance, getWarehouses, getWarehouseInventory, getErrorMessage } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 import { CollapsibleSection } from './common';
 
 export default function IssueMaterialForm({ contractors, materials, onSuccess }) {
@@ -29,6 +30,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
   const [notes, setNotes] = useState('');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [submitting, setSubmitting] = useState(false);
 
   // Validation state
@@ -43,13 +45,25 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
     loadWarehouses();
   }, []);
 
-  // Find contractor's warehouse when contractor changes
+  // Auto-detect warehouse when contractor changes
   useEffect(() => {
     if (contractorId && warehouses.length > 0) {
       const ctrWarehouse = warehouses.find(
         (w) => w.contractor_id === parseInt(contractorId) && w.can_hold_materials
       );
       setContractorWarehouse(ctrWarehouse || null);
+
+      // Auto-select source warehouse: pick first non-contractor warehouse
+      if (!warehouseId) {
+        const sourceWh = warehouses.find(
+          (w) => !w.contractor_id && w.can_hold_materials
+        );
+        if (sourceWh) {
+          setWarehouseId(sourceWh.id);
+        } else if (warehouses.length === 1) {
+          setWarehouseId(warehouses[0].id);
+        }
+      }
     } else {
       setContractorWarehouse(null);
     }
@@ -78,10 +92,6 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
       const res = await getWarehouses();
       const data = res.data?.items || res.data || [];
       setWarehouses(data);
-      // Smart default: auto-select if only one warehouse
-      if (data.length === 1) {
-        setWarehouseId(data[0].id);
-      }
     } catch (err) {
       console.error('Failed to load warehouses', err);
       setWarehouses([]);
@@ -112,8 +122,6 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
   const getFieldError = (field) => {
     if (!touched[field]) return '';
     switch (field) {
-      case 'warehouse':
-        return !warehouseId ? 'Select a warehouse' : '';
       case 'contractor':
         return !contractorId ? 'Select a contractor' : '';
       case 'material':
@@ -133,7 +141,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
     return (
       warehouseId &&
       contractorId &&
-      contractorWarehouse && // Contractor must have a warehouse
+      contractorWarehouse &&
       materialId &&
       quantity &&
       !validateQuantity()
@@ -145,13 +153,7 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
     setError('');
     setSuccess('');
 
-    // Mark all fields as touched
-    setTouched({
-      warehouse: true,
-      contractor: true,
-      material: true,
-      quantity: true,
-    });
+    setTouched({ contractor: true, material: true, quantity: true });
 
     if (!isFormValid()) {
       return;
@@ -171,13 +173,13 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
         notes: notes || null,
       });
       setSuccess('Material issued successfully!');
-      // Reset form
       setContractorId('');
       setMaterialId('');
       setQuantity('');
       setIssuedBy('');
       setNotes('');
       setAvailableQty(null);
+      setWarehouseId('');
       setTouched({});
       onSuccess?.();
     } catch (err) {
@@ -191,6 +193,9 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
   const quantityError = getFieldError('quantity');
   const isQuantityValid = touched.quantity && !quantityError && quantity;
 
+  // Source warehouses (non-contractor warehouses)
+  const sourceWarehouses = warehouses.filter((w) => !w.contractor_id);
+
   return (
     <Paper sx={{ p: 3, mb: 3 }}>
       <Typography variant="h6" gutterBottom>
@@ -203,66 +208,71 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
         </Alert>
       )}
       {success && (
-        <Alert severity="success" sx={{ mb: 2 }} onClose={() => setSuccess('')}>
+        <Alert severity="success" sx={{ mb: 2 }}>
           {success}
         </Alert>
       )}
 
       <Box component="form" onSubmit={handleSubmit}>
-        {/* Essential Fields */}
-        <FormControl
-          fullWidth
-          sx={{ mb: 2 }}
-          error={!!getFieldError('warehouse')}
-          required
-        >
-          <InputLabel>Warehouse</InputLabel>
-          <Select
-            value={warehouseId}
-            label="Warehouse"
-            onChange={(e) => {
-              setWarehouseId(e.target.value);
-              setMaterialId('');
-              setAvailableQty(null);
-            }}
-            onBlur={() => handleBlur('warehouse')}
+        {/* Step 1: Contractor + Warehouse (combined row) */}
+        <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+          Step 1: Select contractor & source warehouse
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+          <FormControl
+            sx={{ flex: 2 }}
+            error={!!getFieldError('contractor')}
+            required
           >
-            {warehouses.map((wh) => (
-              <MenuItem key={wh.id} value={wh.id}>
-                {wh.code} - {wh.name}
-              </MenuItem>
-            ))}
-          </Select>
-          {getFieldError('warehouse') && (
-            <FormHelperText>{getFieldError('warehouse')}</FormHelperText>
-          )}
-        </FormControl>
+            <InputLabel>Contractor</InputLabel>
+            <Select
+              value={contractorId}
+              label="Contractor"
+              onChange={(e) => {
+                setContractorId(e.target.value);
+                setMaterialId('');
+                setAvailableQty(null);
+              }}
+              onBlur={() => handleBlur('contractor')}
+            >
+              {(contractors || []).map((c) => (
+                <MenuItem key={c.id} value={c.id}>
+                  {c.code} - {c.name}
+                </MenuItem>
+              ))}
+            </Select>
+            {getFieldError('contractor') && (
+              <FormHelperText>{getFieldError('contractor')}</FormHelperText>
+            )}
+          </FormControl>
 
-        <FormControl
-          fullWidth
-          sx={{ mb: 2 }}
-          error={!!getFieldError('contractor')}
-          required
-        >
-          <InputLabel>Contractor</InputLabel>
-          <Select
-            value={contractorId}
-            label="Contractor"
-            onChange={(e) => setContractorId(e.target.value)}
-            onBlur={() => handleBlur('contractor')}
-          >
-            {(contractors || []).map((c) => (
-              <MenuItem key={c.id} value={c.id}>
-                {c.code} - {c.name}
-              </MenuItem>
-            ))}
-          </Select>
-          {getFieldError('contractor') && (
-            <FormHelperText>{getFieldError('contractor')}</FormHelperText>
-          )}
-        </FormControl>
+          <FormControl sx={{ flex: 1 }}>
+            <InputLabel>Source Warehouse</InputLabel>
+            <Select
+              value={warehouseId}
+              label="Source Warehouse"
+              onChange={(e) => {
+                setWarehouseId(e.target.value);
+                setMaterialId('');
+                setAvailableQty(null);
+              }}
+            >
+              {sourceWarehouses.map((wh) => (
+                <MenuItem key={wh.id} value={wh.id}>
+                  {wh.code}
+                </MenuItem>
+              ))}
+              {/* If no source warehouses, show all */}
+              {sourceWarehouses.length === 0 && warehouses.map((wh) => (
+                <MenuItem key={wh.id} value={wh.id}>
+                  {wh.code} - {wh.name}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </Box>
 
-        {/* Show destination warehouse info */}
+        {/* Destination info */}
         {contractorId && (
           <Alert
             severity={contractorWarehouse ? 'info' : 'warning'}
@@ -275,83 +285,85 @@ export default function IssueMaterialForm({ contractors, materials, onSuccess })
               </>
             ) : (
               <>
-                This contractor does not have a warehouse. Please create a warehouse for this contractor first.
+                This contractor does not have a warehouse. Please create one first.
               </>
             )}
           </Alert>
         )}
 
-        <FormControl
-          fullWidth
-          sx={{ mb: 2 }}
-          error={!!getFieldError('material')}
-          required
-          disabled={!warehouseId}
-        >
-          <InputLabel>Material</InputLabel>
-          <Select
-            value={materialId}
-            label="Material"
-            onChange={(e) => setMaterialId(e.target.value)}
-            onBlur={() => handleBlur('material')}
-          >
-            {(materials || []).map((m) => {
-              const invItem = warehouseInventory.find((i) => i.material_id === m.id);
-              const available = invItem ? invItem.current_quantity : 0;
-              return (
-                <MenuItem key={m.id} value={m.id}>
-                  {m.code} - {m.name} ({m.unit})
-                  {warehouseId && (
-                    <Chip
-                      label={`Avail: ${available}`}
-                      size="small"
-                      color={available > 0 ? 'success' : 'error'}
-                      sx={{ ml: 1 }}
-                    />
-                  )}
-                </MenuItem>
-              );
-            })}
-          </Select>
-          {getFieldError('material') && (
-            <FormHelperText>{getFieldError('material')}</FormHelperText>
-          )}
-        </FormControl>
+        {/* Step 2: Material + Quantity (combined row) */}
+        {contractorId && warehouseId && contractorWarehouse && (
+          <>
+            <Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: 'block' }}>
+              Step 2: Select material & quantity
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+              <FormControl
+                sx={{ flex: 2 }}
+                error={!!getFieldError('material')}
+                required
+              >
+                <InputLabel>Material</InputLabel>
+                <Select
+                  value={materialId}
+                  label="Material"
+                  onChange={(e) => setMaterialId(e.target.value)}
+                  onBlur={() => handleBlur('material')}
+                >
+                  {(materials || []).map((m) => {
+                    const invItem = warehouseInventory.find((i) => i.material_id === m.id);
+                    const available = invItem ? invItem.current_quantity : 0;
+                    return (
+                      <MenuItem key={m.id} value={m.id}>
+                        {m.code} - {m.name} ({m.unit})
+                        <Chip
+                          label={`Avail: ${available}`}
+                          size="small"
+                          color={available > 0 ? 'success' : 'error'}
+                          sx={{ ml: 1 }}
+                        />
+                      </MenuItem>
+                    );
+                  })}
+                </Select>
+                {getFieldError('material') && (
+                  <FormHelperText>{getFieldError('material')}</FormHelperText>
+                )}
+              </FormControl>
 
-        {availableQty !== null && (
-          <Alert
-            severity={availableQty > 0 ? 'info' : 'warning'}
-            sx={{ mb: 2 }}
-          >
-            Available in warehouse: <strong>{availableQty} {selectedMaterial?.unit || ''}</strong>
-          </Alert>
+              <TextField
+                sx={{ flex: 1 }}
+                label="Quantity"
+                type="number"
+                value={quantity}
+                onChange={(e) => setQuantity(e.target.value)}
+                onBlur={() => handleBlur('quantity')}
+                required
+                error={!!quantityError}
+                helperText={quantityError || (selectedMaterial ? selectedMaterial.unit : '')}
+                slotProps={{
+                  input: {
+                    min: 0,
+                    step: 0.01,
+                    endAdornment: isQuantityValid ? (
+                      <InputAdornment position="end">
+                        <CheckCircleIcon color="success" fontSize="small" />
+                      </InputAdornment>
+                    ) : null,
+                  },
+                }}
+              />
+            </Box>
+
+            {availableQty !== null && availableQty > 0 && (
+              <Typography variant="caption" color="text.secondary" sx={{ mb: 2, display: 'block' }}>
+                Available: {availableQty} {selectedMaterial?.unit || ''}
+              </Typography>
+            )}
+          </>
         )}
 
-        <TextField
-          fullWidth
-          label="Quantity"
-          type="number"
-          value={quantity}
-          onChange={(e) => setQuantity(e.target.value)}
-          onBlur={() => handleBlur('quantity')}
-          required
-          sx={{ mb: 2 }}
-          error={!!quantityError}
-          helperText={quantityError || (selectedMaterial ? `Unit: ${selectedMaterial.unit}` : '')}
-          slotProps={{
-            input: {
-              min: 0,
-              step: 0.01,
-              endAdornment: isQuantityValid ? (
-                <InputAdornment position="end">
-                  <CheckCircleIcon color="success" fontSize="small" />
-                </InputAdornment>
-              ) : null,
-            },
-          }}
-        />
-
-        {/* Optional Fields - Collapsed by default */}
+        {/* Step 3: Additional details (optional, collapsed) */}
         <CollapsibleSection
           title="Additional Details"
           expandLabel="Add notes & details (optional)"

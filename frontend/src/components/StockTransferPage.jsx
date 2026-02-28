@@ -53,6 +53,7 @@ import {
   getFinishedGoods,
   getErrorMessage,
 } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 const statusColors = {
   draft: 'default',
@@ -69,6 +70,7 @@ export default function StockTransferPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
 
   // Filter state
   const [statusFilter, setStatusFilter] = useState('');

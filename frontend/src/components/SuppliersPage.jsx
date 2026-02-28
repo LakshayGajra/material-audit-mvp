@@ -26,11 +26,13 @@ import {
   Store as SupplierIcon,
 } from '@mui/icons-material';
 import { getSuppliers, createSupplier, updateSupplier, getErrorMessage } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function SuppliersPage({ refreshKey }) {
   const [suppliers, setSuppliers] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [loading, setLoading] = useState(false);
 
   // Dialog state

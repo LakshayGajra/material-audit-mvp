@@ -17,6 +17,7 @@ import {
   IconButton,
 } from '@mui/material';
 import { Visibility as ViewIcon } from '@mui/icons-material';
+import WorkflowStepper from '../common/WorkflowStepper';
 
 const STATUS_COLORS = {
   draft: 'default',
@@ -84,6 +85,7 @@ export default function HistoryView({
                 <TableCell>Contractor</TableCell>
                 <TableCell>Type</TableCell>
                 <TableCell>Status</TableCell>
+                <TableCell>Progress</TableCell>
                 <TableCell>Check Date</TableCell>
                 <TableCell>Initiated By</TableCell>
                 <TableCell>Lines/Variances</TableCell>
@@ -93,7 +95,7 @@ export default function HistoryView({
             <TableBody>
               {checks.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} align="center">
+                  <TableCell colSpan={9} align="center">
                     No inventory checks found.
                   </TableCell>
                 </TableRow>
@@ -115,6 +117,9 @@ export default function HistoryView({
                         color={STATUS_COLORS[check.status]}
                         size="small"
                       />
+                    </TableCell>
+                    <TableCell>
+                      <WorkflowStepper type="inventoryCheck" status={check.status} compact />
                     </TableCell>
                     <TableCell>{check.check_date}</TableCell>
                     <TableCell>{check.initiated_by || '-'}</TableCell>

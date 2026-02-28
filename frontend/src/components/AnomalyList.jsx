@@ -15,12 +15,14 @@ import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import WarningIcon from '@mui/icons-material/Warning';
 import { getAnomalies, resolveAnomaly, getErrorMessage } from '../api';
 import { DataTable } from './common';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function AnomalyList() {
   const [anomalies, setAnomalies] = useState([]);
   const [filter, setFilter] = useState('unresolved');
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
 
   useEffect(() => {
     loadAnomalies();

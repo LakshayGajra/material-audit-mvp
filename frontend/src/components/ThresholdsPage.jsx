@@ -36,11 +36,13 @@ import {
   deleteThreshold,
   getErrorMessage,
 } from '../api';
+import useAutoDismiss from '../hooks/useAutoDismiss';
 
 export default function ThresholdsPage({ contractors, materials, refreshKey }) {
   const [thresholds, setThresholds] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [materialFilter, setMaterialFilter] = useState('');
   const [contractorFilter, setContractorFilter] = useState('');
 

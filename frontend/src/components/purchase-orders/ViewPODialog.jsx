@@ -26,6 +26,7 @@ import {
   Close as CloseIcon,
   LocalShipping as ShippingIcon,
 } from '@mui/icons-material';
+import WorkflowStepper from '../common/WorkflowStepper';
 
 const STATUS_COLORS = {
   DRAFT: 'default',
@@ -62,6 +63,9 @@ export default function ViewPODialog({
       <DialogContent>
         {selectedPO && (
           <Box>
+            <Box sx={{ mb: 3 }}>
+              <WorkflowStepper type="po" status={selectedPO.status} />
+            </Box>
             <Grid container spacing={2} sx={{ mb: 3 }}>
               <Grid size={6}>
                 <Typography variant="body2" color="text.secondary">Supplier</Typography>

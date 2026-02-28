@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import useAutoDismiss from '../../hooks/useAutoDismiss';
 import {
   getPurchaseOrders,
   createPurchaseOrder,
@@ -20,6 +21,7 @@ export default function usePurchaseOrders(materials, refreshKey) {
   const [warehouses, setWarehouses] = useState([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState('');
+  useAutoDismiss(success, setSuccess);
   const [statusFilter, setStatusFilter] = useState('');
   const [subTab, setSubTab] = useState(0);
 
